@@ -257,6 +257,8 @@ function computeDerived(s) {
   const scaled = (v) => (v / unit.div).toFixed(1);
 
   const pieData = channelFV.filter((c) => c.fv > 0).map((c) => ({ name: c.name, value: c.fv, risky: c.risky }));
+  const capitalPieData = withWeight.filter((c) => c.weight > 0).map((c) => ({ name: c.name, value: c.weight, risky: c.risky }));
+  const fvRiskyPct = fvPortfolio > 0 ? (channelFV.filter((c) => c.risky).reduce((a, c) => a + c.fv, 0) / fvPortfolio) * 100 : 0;
 
   const yearlyTable = [];
   for (let y = 0; y <= years; y++) {
@@ -283,7 +285,7 @@ function computeDerived(s) {
     years, months, blendedRate, riskyPct, maxRiskyByRule, maxRisky, isOverRisk, rRisky, rSafe, totalWeight,
     fvPortfolio, fvTarget, neededCorpus, doubleTarget, autoDoublingPeriod, doublingPeriod, numDoublings, multiplier,
     illustrationBase, projectedByRule72, projectedExactCompound, activeScenarios, chartData, unit, scaled, pieData,
-    yearlyTable, suggestion, channelFV,
+    yearlyTable, suggestion, channelFV, capitalPieData, fvRiskyPct,
   };
 }
 
@@ -338,18 +340,18 @@ function buildLineChartSVG(d) {
   return svg + legend;
 }
 
-function buildDonut(d) {
-  const total = d.pieData.reduce((a, p) => a + p.value, 0);
+function buildDonut(pieArr) {
+  const total = pieArr.reduce((a, p) => a + p.value, 0);
   if (total <= 0) return { css: 'background:rgba(27,58,43,0.08)', legend: '<div class="note">Chưa có dữ liệu.</div>' };
   let acc = 0;
-  const stops = d.pieData.map((p, i) => {
+  const stops = pieArr.map((p, i) => {
     const start = (acc / total) * 100;
     acc += p.value;
     const end = (acc / total) * 100;
     return PIE_COLORS[i % PIE_COLORS.length] + ' ' + start.toFixed(2) + '% ' + end.toFixed(2) + '%';
   }).join(', ');
   let legend = '';
-  d.pieData.forEach((p, i) => {
+  pieArr.forEach((p, i) => {
     const pct = ((p.value / total) * 100).toFixed(1);
     legend += '<div class="pie-legend-row"><span><i class="legend-dot" style="background:' + PIE_COLORS[i % PIE_COLORS.length] + '"></i>' +
       esc(p.name) + (p.risky ? ' · rủi ro cao' : ' · an toàn') + '</span><span style="font-family:IBM Plex Mono,monospace;font-weight:600">' + pct + '%</span></div>';
@@ -524,9 +526,21 @@ function riskSectionHTML(s, d) {
 }
 
 function pieSectionHTML(d) {
-  const donut = buildDonut(d);
-  return '<div class="donut-wrap"><div class="donut" style="' + donut.css + '"></div></div>' + donut.legend +
-    '<div class="note">ℹ️ Vòng tròn thể hiện tỷ trọng giá trị dự kiến của từng kênh trong tổng tài sản lúc về hưu.</div>';
+  const capDonut = buildDonut(d.capitalPieData);
+  const fvDonut = buildDonut(d.pieData);
+  return (
+    '<div class="note" style="margin-top:0;margin-bottom:6px">ℹ️ Hai vòng tròn dưới đây trả lời 2 câu hỏi khác nhau: ' +
+    '<b>bạn đang bỏ tiền vào đâu</b> (vốn) và <b>cuối cùng tài sản sẽ nằm ở đâu</b> (giá trị dự kiến, đã cộng lãi kép). ' +
+    'Kênh rủi ro cao thường có tỷ suất cao hơn nên tỷ trọng của nó ở vòng thứ 2 luôn lớn hơn vòng thứ 1.</div>' +
+
+    '<div style="font-size:13px;font-weight:600;margin-top:10px;margin-bottom:2px">1. Phân bổ theo vốn đầu tư (hiện tại)</div>' +
+    '<div style="font-size:11px;color:var(--ink-soft);margin-bottom:6px">Cùng cơ sở với thanh đo rủi ro ở Trang 2 · rủi ro cao: <b>' + d.riskyPct.toFixed(1) + '%</b></div>' +
+    '<div class="donut-wrap"><div class="donut" style="' + capDonut.css + '"></div></div>' + capDonut.legend +
+
+    '<div style="font-size:13px;font-weight:600;margin-top:20px;margin-bottom:2px">2. Phân bổ theo giá trị dự kiến lúc về hưu</div>' +
+    '<div style="font-size:11px;color:var(--ink-soft);margin-bottom:6px">Sau khi cộng lãi kép đến năm về hưu · rủi ro cao: <b>' + d.fvRiskyPct.toFixed(1) + '%</b></div>' +
+    '<div class="donut-wrap"><div class="donut" style="' + fvDonut.css + '"></div></div>' + fvDonut.legend
+  );
 }
 
 function tableSectionHTML(s, d) {
@@ -714,3 +728,4 @@ render();
 </script>
 </body>
 </html>
+
