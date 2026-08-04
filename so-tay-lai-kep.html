@@ -1,0 +1,716 @@
+<!-- Nút quay lại trang chủ -->
+<div style="max-width: 480px; margin: 12px auto 0; padding: 0 16px; text-align: left;">
+  <a href="index.html" style="display: inline-flex; align-items: center; gap: 6px; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; color: #1B3A2B; text-decoration: none; background: rgba(27,58,43,0.08); padding: 6px 12px; border-radius: 4px; border: 1px solid rgba(27,58,43,0.2);">
+    ← Quay lại trang chủ
+  </a>
+</div>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>Sổ Tay Lãi Kép</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Sổ Tay Lãi Kép">
+<link rel="apple-touch-icon" href="data:image/png;base64,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">
+<link rel="icon" href="data:image/png;base64,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">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
+* { box-sizing: border-box; }
+:root {
+  --paper: #F3ECD9; --paper-card: #FFFDF7; --ink: #1B3A2B; --ink-soft: #4C6357;
+  --gold: #B8862E; --seal: #9C3B3B; --teal: #2F7A6B; --line: rgba(27,58,43,0.18);
+}
+body {
+  margin: 0; background: var(--paper);
+  background-image: repeating-linear-gradient(to bottom, transparent, transparent 27px, rgba(27,58,43,0.06) 28px);
+  min-height: 100vh; font-family: 'Inter', sans-serif; color: var(--ink); padding-bottom: 40px;
+}
+.ledger-cover { padding: 28px 20px 20px; text-align: center; border-bottom: 3px double var(--ink);
+  background: linear-gradient(180deg, rgba(184,134,46,0.08), transparent); }
+.ledger-cover h1 { font-family: 'Fraunces', serif; font-weight: 700; font-size: 26px; letter-spacing: 0.5px; margin: 0; }
+.ledger-cover p { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--ink-soft); margin: 6px 0 0; }
+.ledger-page { max-width: 480px; margin: 18px auto 0; padding: 0 16px; }
+.ledger-card { background: var(--paper-card); border: 1px solid var(--line); border-radius: 4px;
+  padding: 16px 16px 18px; margin-bottom: 16px; box-shadow: 0 1px 0 rgba(27,58,43,0.05); }
+.ledger-eyebrow { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 1.5px;
+  color: var(--gold); text-transform: uppercase; margin-bottom: 2px; display: block; }
+.ledger-title { font-family: 'Fraunces', serif; font-weight: 600; font-size: 18px; display: flex;
+  align-items: center; gap: 8px; margin: 0 0 14px; border-bottom: 1px solid var(--line); padding-bottom: 10px; }
+.ledger-label { font-size: 12px; color: var(--ink-soft); display: block; margin-bottom: 4px; font-weight: 500; }
+.ledger-input-wrap { display: flex; align-items: center; border-bottom: 1.5px solid var(--ink); padding-bottom: 3px; }
+.ledger-input { font-family: 'IBM Plex Mono', monospace; font-size: 16px; font-weight: 600; color: var(--ink);
+  background: transparent; border: none; outline: none; width: 100%; -webkit-appearance: none; }
+.ledger-suffix { font-size: 12px; color: var(--ink-soft); font-family: 'IBM Plex Mono', monospace;
+  white-space: nowrap; padding-left: 6px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.channel-row { border: 1px solid var(--line); border-radius: 4px; padding: 10px 12px; margin-bottom: 10px;
+  background: rgba(27,58,43,0.02); }
+.channel-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; }
+.channel-name { font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 13px; background: transparent;
+  border: none; border-bottom: 1px dashed var(--line); outline: none; width: 100%; color: var(--ink); }
+.risky-tag { font-size: 10px; padding: 2px 7px; border-radius: 10px; font-weight: 600; letter-spacing: 0.4px;
+  white-space: nowrap; cursor: pointer; user-select: none; border: 1px solid transparent; }
+.risky-tag.on { background: rgba(156,59,59,0.12); color: var(--seal); border-color: rgba(156,59,59,0.3); }
+.risky-tag.off { background: rgba(47,122,107,0.12); color: var(--teal); border-color: rgba(47,122,107,0.3); }
+.del-btn { color: var(--seal); opacity: 0.6; background: none; border: none; cursor: pointer; padding: 2px; font-size: 14px; }
+.del-btn:active { opacity: 1; }
+.mode-chips { display: flex; gap: 5px; margin-bottom: 8px; }
+.mode-chip { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; font-weight: 600; padding: 3px 8px;
+  border-radius: 10px; border: 1px solid var(--line); cursor: pointer; background: var(--paper-card); color: var(--ink-soft); }
+.mode-chip.active { background: var(--ink); color: var(--paper-card); border-color: var(--ink); }
+.channel-amounts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px; }
+.rate-row { display: flex; align-items: center; gap: 6px; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px;
+  border-bottom: 1px solid var(--line); padding-bottom: 3px; margin-top: 4px; }
+.rate-row input { width: 40px; border: none; background: transparent; outline: none;
+  font-family: 'IBM Plex Mono', monospace; font-weight: 600; color: var(--ink); }
+.mini-fv { font-size: 10.5px; color: var(--ink-soft); margin-top: 6px; font-family: 'IBM Plex Mono', monospace; }
+.add-btn, .auto-btn { font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600;
+  border: 1px solid var(--ink); background: var(--paper-card); color: var(--ink); border-radius: 4px;
+  padding: 7px 10px; display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
+.risk-gauge { position: relative; height: 10px; border-radius: 5px; background: rgba(47,122,107,0.18);
+  overflow: visible; margin-top: 10px; }
+.risk-gauge-fill { height: 100%; border-radius: 5px; background: var(--seal); transition: width 0.2s; }
+.risk-gauge-marker { position: absolute; width: 2px; background: var(--ink); border-radius: 1px; }
+.warn-box, .ok-box { margin-top: 10px; font-size: 12px; padding: 8px 10px; border-radius: 4px;
+  display: flex; gap: 6px; align-items: flex-start; line-height: 1.5; }
+.warn-box { background: rgba(156,59,59,0.1); color: var(--seal); }
+.ok-box { background: rgba(47,122,107,0.1); color: var(--teal); }
+.seal { width: 132px; height: 132px; border-radius: 50%; border: 3px solid var(--seal); outline: 1.5px solid var(--seal);
+  outline-offset: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  margin: 4px auto 14px; transform: rotate(-6deg); color: var(--seal); font-family: 'Fraunces', serif; }
+.seal .big { font-size: 28px; font-weight: 700; line-height: 1; }
+.seal .small { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 1px; text-transform: uppercase;
+  margin-top: 4px; text-align: center; padding: 0 10px; }
+.kpi-card { border: 1px solid var(--line); border-radius: 4px; padding: 10px 12px; background: rgba(184,134,46,0.05); }
+.kpi-card .k-label { font-size: 11px; color: var(--ink-soft); margin-bottom: 4px; }
+.kpi-card .k-value { font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 16px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.chip { font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 600; border-radius: 12px;
+  padding: 5px 10px; border: 1px solid var(--line); cursor: pointer; background: var(--paper-card); }
+.chip.active { color: white; }
+.note { font-size: 11px; color: var(--ink-soft); line-height: 1.5; margin-top: 8px; display: flex; gap: 5px; }
+.verdict { font-size: 12.5px; line-height: 1.55; padding: 10px 12px; border-radius: 4px; margin-top: 4px; }
+.legend-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; flex-shrink:0; }
+.pie-legend-row { display: flex; align-items: center; justify-content: space-between; font-size: 11.5px;
+  padding: 3px 0; border-bottom: 1px dashed var(--line); }
+.double-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; text-align: center; margin: 10px 0 4px; }
+.double-cell { border: 1px solid var(--line); border-radius: 4px; padding: 8px 4px; }
+.double-cell .dn { font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 15px; }
+.double-cell .dl { font-size: 9.5px; color: var(--ink-soft); margin-top: 2px; }
+.table-wrap { overflow: auto; max-height: 360px; border: 1px solid var(--line); border-radius: 4px; }
+.table-wrap table { border-collapse: collapse; width: 100%; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; }
+.table-wrap th, .table-wrap td { padding: 6px 8px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.table-wrap th:first-child, .table-wrap td:first-child { text-align: left; position: sticky; left: 0; background: var(--paper-card); z-index: 1; }
+.table-wrap thead th { position: sticky; top: 0; background: var(--paper-card); z-index: 2; border-bottom: 2px solid var(--ink); font-weight: 700; color: var(--ink-soft); }
+.table-wrap thead th:first-child { z-index: 3; }
+.table-wrap tbody tr:nth-child(even) td { background: rgba(27,58,43,0.02); }
+.donut-wrap { display: flex; justify-content: center; margin: 6px 0 12px; }
+.donut { width: 190px; height: 190px; border-radius: 50%; position: relative; }
+.donut::after { content: ""; position: absolute; inset: 30px; background: var(--paper-card); border-radius: 50%; }
+.chart-svg-wrap { width: 100%; overflow: hidden; }
+.chart-legend { display: flex; flex-wrap: wrap; gap: 8px; font-size: 10.5px; margin-top: 6px; }
+.chart-legend span { display: flex; align-items: center; gap: 4px; }
+.save-banner { font-size: 11px; font-family: 'IBM Plex Mono', monospace; color: var(--ink-soft); text-align: center; margin-top: 10px; }
+.save-banner .link { text-decoration: underline; cursor: pointer; color: var(--seal); margin-left: 8px; }
+textarea.code-box { width: 100%; font-family: 'IBM Plex Mono', monospace; font-size: 11px; padding: 8px;
+  border: 1px solid var(--line); border-radius: 4px; background: rgba(27,58,43,0.02); color: var(--ink); resize: vertical; }
+input[type=number]::-webkit-inner-spin-button { opacity: 1; }
+</style>
+</head>
+<body>
+<div class="ledger-cover">
+  <h1>Sổ Tay Lãi Kép</h1>
+  <p>Kế hoạch tích lũy &amp; về hưu</p>
+  <div class="save-banner">
+    ✓ Dữ liệu tự lưu trên máy này &mdash; mở lại không cần nhập lại
+    <span class="link" data-action="reset">Xoá &amp; về mặc định</span>
+  </div>
+</div>
+<div class="ledger-page" id="app"></div>
+
+<script>
+// ================= Helpers =================
+const fmtVND = (n) => new Intl.NumberFormat('vi-VN').format(Math.round(n || 0));
+const parseDigits = (s) => Number(String(s).replace(/[^\d]/g, '')) || 0;
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+const esc = (s) => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+function fvAnnuity(monthly, annualRatePct, months) {
+  const r = annualRatePct / 100 / 12;
+  if (months <= 0) return 0;
+  if (Math.abs(r) < 1e-9) return monthly * months;
+  return monthly * ((Math.pow(1 + r, months) - 1) / r);
+}
+function fvLumpSum(principal, annualRatePct, months) {
+  const r = annualRatePct / 100 / 12;
+  return principal * Math.pow(1 + r, months);
+}
+function ruleOf72(ratePct) { return ratePct > 0 ? 72 / ratePct : Infinity; }
+
+const SCENARIO_DEFS = [
+  { key: 'conservative', label: 'Thận trọng', rate: 6, color: '#5B6B8C' },
+  { key: 'balanced', label: 'Cân bằng', rate: 9, color: '#2F7A6B' },
+  { key: 'growth', label: 'Tăng trưởng', rate: 12, color: '#B8862E' },
+  { key: 'aggressive', label: 'Mạo hiểm', rate: 15, color: '#9C3B3B' },
+];
+const RISK_RULES = {
+  safe: { offset: 100, label: 'An toàn', color: '#2F7A6B' },
+  standard: { offset: 110, label: 'Tiêu chuẩn', color: '#B8862E' },
+  aggressive: { offset: 120, label: 'Tối đa', color: '#9C3B3B' },
+};
+const PIE_COLORS = ['#B8862E', '#2F7A6B', '#9C3B3B', '#5B6B8C', '#7A5C3E', '#3F7D8C', '#8C6B3F'];
+
+const DEFAULT_CHANNELS = [
+  { id: 1, name: 'Chứng khoán', rate: 12, risky: true, mode: 'dca', lumpSum: 0, monthly: 5000000 },
+  { id: 2, name: 'Bất động sản', rate: 10, risky: true, mode: 'lump', lumpSum: 1000000000, monthly: 0 },
+  { id: 3, name: 'Vàng', rate: 7, risky: false, mode: 'dca', lumpSum: 0, monthly: 2000000 },
+  { id: 4, name: 'Bạc', rate: 6, risky: false, mode: 'dca', lumpSum: 0, monthly: 1000000 },
+  { id: 5, name: 'Tiết kiệm / Coin', rate: 5, risky: false, mode: 'both', lumpSum: 200000000, monthly: 2000000 },
+];
+const DEFAULT_SCENARIOS = { conservative: false, balanced: true, growth: true, aggressive: false };
+const DEFAULT_STATE = {
+  currentAge: 30, retireAge: 55, desiredRate: 10, monthlyExpense: 20000000,
+  doublingPeriodOverride: null, channels: DEFAULT_CHANNELS, scenarios: DEFAULT_SCENARIOS, riskRule: 'standard',
+};
+
+// ================= Persistence (localStorage) =================
+const STORAGE_KEY = 'lai-kep-state-v1';
+let idCounter = 100;
+let state;
+try {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  state = raw ? Object.assign({}, DEFAULT_STATE, JSON.parse(raw)) : JSON.parse(JSON.stringify(DEFAULT_STATE));
+} catch (e) {
+  state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+}
+if (state.channels && state.channels.length) {
+  idCounter = Math.max(...state.channels.map((c) => c.id)) + 1;
+}
+function persist() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+}
+
+// ================= Derived calculations =================
+function computeDerived(s) {
+  const years = Math.max(0, s.retireAge - s.currentAge);
+  const months = years * 12;
+  const withWeight = s.channels.map((c) => ({ ...c, weight: c.lumpSum + c.monthly * months }));
+  const totalWeight = withWeight.reduce((a, c) => a + c.weight, 0);
+  const riskyWeight = withWeight.filter((c) => c.risky).reduce((a, c) => a + c.weight, 0);
+  const safeWeight = totalWeight - riskyWeight;
+  const riskyPct = totalWeight > 0 ? (riskyWeight / totalWeight) * 100 : 0;
+  const blendedRate = totalWeight > 0 ? withWeight.reduce((a, c) => a + c.rate * c.weight, 0) / totalWeight : 0;
+  const rRisky = riskyWeight > 0 ? withWeight.filter((c) => c.risky).reduce((a, c) => a + c.rate * c.weight, 0) / riskyWeight : 0;
+  const rSafe = safeWeight > 0 ? withWeight.filter((c) => !c.risky).reduce((a, c) => a + c.rate * c.weight, 0) / safeWeight : 0;
+
+  const maxRiskyByRule = {
+    safe: clamp(RISK_RULES.safe.offset - s.currentAge, 0, 100),
+    standard: clamp(RISK_RULES.standard.offset - s.currentAge, 0, 100),
+    aggressive: clamp(RISK_RULES.aggressive.offset - s.currentAge, 0, 100),
+  };
+  const maxRisky = maxRiskyByRule[s.riskRule];
+  const isOverRisk = riskyPct > maxRisky + 0.01;
+
+  const totalLumpSum = s.channels.reduce((a, c) => a + c.lumpSum, 0);
+  const totalMonthly = s.channels.reduce((a, c) => a + c.monthly, 0);
+
+  const channelFV = s.channels.map((c) => ({
+    ...c, fv: fvLumpSum(c.lumpSum, c.rate, months) + fvAnnuity(c.monthly, c.rate, months),
+  }));
+  const fvPortfolio = channelFV.reduce((a, c) => a + c.fv, 0);
+  const fvTarget = fvLumpSum(totalLumpSum, s.desiredRate, months) + fvAnnuity(totalMonthly, s.desiredRate, months);
+  const neededCorpus = s.monthlyExpense * 12 * 25;
+
+  const doubleTarget = ruleOf72(s.desiredRate);
+  const autoDoublingPeriod = blendedRate > 0 ? ruleOf72(blendedRate) : null;
+  const doublingPeriod = (s.doublingPeriodOverride !== null && s.doublingPeriodOverride !== undefined)
+    ? s.doublingPeriodOverride : (autoDoublingPeriod || 5);
+  const numDoublings = doublingPeriod > 0 ? years / doublingPeriod : 0;
+  const multiplier = Math.pow(2, numDoublings);
+  const illustrationBase = totalLumpSum > 0 ? totalLumpSum : 1000000000;
+  const projectedByRule72 = illustrationBase * multiplier;
+  const projectedExactCompound = fvLumpSum(illustrationBase, blendedRate, months);
+
+  const activeScenarios = SCENARIO_DEFS.filter((sc) => s.scenarios[sc.key]);
+  const chartData = [];
+  for (let y = 0; y <= years; y++) {
+    const m = y * 12;
+    const portfolioVal = s.channels.reduce((a, c) => a + fvLumpSum(c.lumpSum, c.rate, m) + fvAnnuity(c.monthly, c.rate, m), 0);
+    const row = {
+      age: s.currentAge + y,
+      portfolio: portfolioVal,
+      target: fvLumpSum(totalLumpSum, s.desiredRate, m) + fvAnnuity(totalMonthly, s.desiredRate, m),
+      scenarios: {},
+    };
+    activeScenarios.forEach((sc) => {
+      row.scenarios[sc.key] = fvLumpSum(totalLumpSum, sc.rate, m) + fvAnnuity(totalMonthly, sc.rate, m);
+    });
+    chartData.push(row);
+  }
+  let maxVal = 0;
+  chartData.forEach((r) => {
+    maxVal = Math.max(maxVal, r.portfolio, r.target, ...Object.values(r.scenarios));
+  });
+  const unit = maxVal >= 1e9 ? { div: 1e9, label: 'tỷ đ' } : { div: 1e6, label: 'triệu đ' };
+  const scaled = (v) => (v / unit.div).toFixed(1);
+
+  const pieData = channelFV.filter((c) => c.fv > 0).map((c) => ({ name: c.name, value: c.fv, risky: c.risky }));
+
+  const yearlyTable = [];
+  for (let y = 0; y <= years; y++) {
+    const m = y * 12;
+    const values = s.channels.map((c) => fvLumpSum(c.lumpSum, c.rate, m) + fvAnnuity(c.monthly, c.rate, m));
+    const total = values.reduce((a, v) => a + v, 0);
+    yearlyTable.push({ age: s.currentAge + y, values, total });
+  }
+
+  let suggestion = { type: 'empty' };
+  if (totalWeight > 0) {
+    if (rRisky === rSafe) suggestion = { type: 'flat' };
+    else if (s.desiredRate <= rSafe) suggestion = { type: 'safe-enough' };
+    else if (s.desiredRate > rRisky) suggestion = { type: 'impossible', rRisky };
+    else {
+      const neededRiskyWeightPct = clamp(((s.desiredRate - rSafe) / (rRisky - rSafe)) * 100, 0, 100);
+      const fx = riskyWeight / totalWeight;
+      const rRiskyNeeded = fx > 0 ? (s.desiredRate - (1 - fx) * rSafe) / fx : null;
+      suggestion = { type: 'ok', neededRiskyWeightPct, rRiskyNeeded, overLimit: ((s.desiredRate - rSafe) / (rRisky - rSafe)) * 100 > maxRisky };
+    }
+  }
+
+  return {
+    years, months, blendedRate, riskyPct, maxRiskyByRule, maxRisky, isOverRisk, rRisky, rSafe, totalWeight,
+    fvPortfolio, fvTarget, neededCorpus, doubleTarget, autoDoublingPeriod, doublingPeriod, numDoublings, multiplier,
+    illustrationBase, projectedByRule72, projectedExactCompound, activeScenarios, chartData, unit, scaled, pieData,
+    yearlyTable, suggestion, channelFV,
+  };
+}
+
+// ================= SVG chart =================
+function buildLineChartSVG(d) {
+  const W = 320, H = 220, padL = 34, padR = 8, padT = 10, padB = 22;
+  const data = d.chartData;
+  if (!data.length) return '';
+  const minAge = data[0].age, maxAge = data[data.length - 1].age;
+  const xScale = (age) => padL + (maxAge > minAge ? (age - minAge) / (maxAge - minAge) : 0) * (W - padL - padR);
+  let maxV = 0;
+  data.forEach((r) => { maxV = Math.max(maxV, r.portfolio, r.target, ...Object.values(r.scenarios)); });
+  if (maxV <= 0) maxV = 1;
+  const yScale = (v) => H - padB - (v / maxV) * (H - padT - padB);
+
+  const toPath = (key, isNested) => data.map((r) => {
+    const v = isNested ? r.scenarios[key] : r[key];
+    return xScale(r.age).toFixed(1) + ',' + yScale(v).toFixed(1);
+  }).join(' ');
+
+  let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:auto;font-family:IBM Plex Mono,monospace;">';
+  // gridlines
+  for (let i = 0; i <= 4; i++) {
+    const y = padT + (i * (H - padT - padB)) / 4;
+    svg += '<line x1="' + padL + '" y1="' + y.toFixed(1) + '" x2="' + (W - padR) + '" y2="' + y.toFixed(1) + '" stroke="rgba(27,58,43,0.15)" stroke-dasharray="3 3"/>';
+    const val = maxV * (1 - i / 4);
+    svg += '<text x="' + (padL - 4) + '" y="' + (y + 3).toFixed(1) + '" font-size="8" fill="#4C6357" text-anchor="end">' + d.scaled(val) + '</text>';
+  }
+  // x labels (first, mid, last)
+  [data[0], data[Math.floor(data.length / 2)], data[data.length - 1]].forEach((r) => {
+    svg += '<text x="' + xScale(r.age).toFixed(1) + '" y="' + (H - 6) + '" font-size="8" fill="#4C6357" text-anchor="middle">' + r.age + '</text>';
+  });
+  // reference line at retirement (last point)
+  const lastX = xScale(maxAge);
+  svg += '<line x1="' + lastX.toFixed(1) + '" y1="' + padT + '" x2="' + lastX.toFixed(1) + '" y2="' + (H - padB) + '" stroke="#9C3B3B" stroke-dasharray="4 4"/>';
+  svg += '<text x="' + lastX.toFixed(1) + '" y="' + (padT + 8) + '" font-size="8" fill="#9C3B3B" text-anchor="end">Về hưu</text>';
+
+  d.activeScenarios.forEach((sc) => {
+    svg += '<polyline points="' + toPath(sc.key, true) + '" fill="none" stroke="' + sc.color + '" stroke-width="1.5" stroke-dasharray="2 3"/>';
+  });
+  svg += '<polyline points="' + toPath('target', false) + '" fill="none" stroke="#2F7A6B" stroke-width="2" stroke-dasharray="5 3"/>';
+  svg += '<polyline points="' + toPath('portfolio', false) + '" fill="none" stroke="#B8862E" stroke-width="3"/>';
+  svg += '</svg>';
+
+  let legend = '<div class="chart-legend">';
+  legend += '<span><i class="legend-dot" style="background:#B8862E"></i>Danh mục thực tế</span>';
+  legend += '<span><i class="legend-dot" style="background:#2F7A6B"></i>Mục tiêu mong muốn</span>';
+  d.activeScenarios.forEach((sc) => {
+    legend += '<span><i class="legend-dot" style="background:' + sc.color + '"></i>' + sc.label + ' · ' + sc.rate + '%</span>';
+  });
+  legend += '</div>';
+  return svg + legend;
+}
+
+function buildDonut(d) {
+  const total = d.pieData.reduce((a, p) => a + p.value, 0);
+  if (total <= 0) return { css: 'background:rgba(27,58,43,0.08)', legend: '<div class="note">Chưa có dữ liệu.</div>' };
+  let acc = 0;
+  const stops = d.pieData.map((p, i) => {
+    const start = (acc / total) * 100;
+    acc += p.value;
+    const end = (acc / total) * 100;
+    return PIE_COLORS[i % PIE_COLORS.length] + ' ' + start.toFixed(2) + '% ' + end.toFixed(2) + '%';
+  }).join(', ');
+  let legend = '';
+  d.pieData.forEach((p, i) => {
+    const pct = ((p.value / total) * 100).toFixed(1);
+    legend += '<div class="pie-legend-row"><span><i class="legend-dot" style="background:' + PIE_COLORS[i % PIE_COLORS.length] + '"></i>' +
+      esc(p.name) + (p.risky ? ' · rủi ro cao' : ' · an toàn') + '</span><span style="font-family:IBM Plex Mono,monospace;font-weight:600">' + pct + '%</span></div>';
+  });
+  return { css: 'background: conic-gradient(' + stops + ')', legend };
+}
+
+// ================= Render =================
+function modeLabel(m) { return m === 'lump' ? 'Một lần' : m === 'dca' ? 'Định kỳ' : 'Cả hai'; }
+
+function render() {
+  const d = computeDerived(state);
+  const app = document.getElementById('app');
+  app.innerHTML = pageHTML(state, d);
+}
+
+function pageHTML(s, d) {
+  return '' +
+  // Trang 1
+  '<div class="ledger-card">' +
+    '<span class="ledger-eyebrow">Trang 1</span>' +
+    '<h2 class="ledger-title">💰 Thông tin của bạn</h2>' +
+    '<div class="grid2" style="margin-bottom:14px">' +
+      fieldNumber('currentAge', 'Tuổi hiện tại', s.currentAge, 'tuổi', 16, 80, 1) +
+      fieldNumber('retireAge', 'Tuổi muốn về hưu', s.retireAge, 'tuổi', s.currentAge + 1, 90, 1) +
+    '</div>' +
+    fieldNumber('desiredRate', 'Mức lợi tức mong muốn (mục tiêu)', s.desiredRate, '%/năm', 0, 40, 0.5) +
+    '<div class="note" id="trang1Note">' + trang1NoteHTML(s, d) + '</div>' +
+  '</div>' +
+
+  // Trang 2
+  '<div class="ledger-card">' +
+    '<span class="ledger-eyebrow">Trang 2</span>' +
+    '<h2 class="ledger-title">📈 Danh mục đầu tư</h2>' +
+    '<div class="note" style="margin-top:0;margin-bottom:10px">Mỗi kênh có thể đầu tư <b>một lần</b> (mua rồi giữ dài hạn, vd bất động sản), <b>định kỳ</b> (tích sản hàng tháng, vd chứng khoán/vàng), hoặc <b>cả hai</b> (vd tiết kiệm: gửi cục + gửi thêm hàng tháng).</div>' +
+    '<div id="channelList">' + s.channels.map((c) => channelRowHTML(c, d)).join('') + '</div>' +
+    '<div style="display:flex;gap:8px;margin-top:4px">' +
+      '<button class="add-btn" data-action="addChannel">➕ Thêm kênh</button>' +
+    '</div>' +
+    '<div id="riskSection">' + riskSectionHTML(s, d) + '</div>' +
+  '</div>' +
+
+  // Trang 3 (pie)
+  '<div class="ledger-card">' +
+    '<span class="ledger-eyebrow">Trang 3</span>' +
+    '<h2 class="ledger-title">🎯 Phân bổ tài sản</h2>' +
+    '<div id="pieSection">' + pieSectionHTML(d) + '</div>' +
+  '</div>' +
+
+  // Trang 4 (table)
+  '<div class="ledger-card">' +
+    '<span class="ledger-eyebrow">Trang 4</span>' +
+    '<h2 class="ledger-title">📅 Bảng giá trị tăng theo năm</h2>' +
+    '<div class="note" style="margin-top:0;margin-bottom:8px">Giá trị dự kiến của từng tài sản qua từng năm (đơn vị ' + d.unit.label + '). Kéo ngang/dọc để xem hết.</div>' +
+    '<div id="tableSection">' + tableSectionHTML(s, d) + '</div>' +
+  '</div>' +
+
+  // Trang 5 (retirement goal)
+  '<div class="ledger-card">' +
+    '<span class="ledger-eyebrow">Trang 5</span>' +
+    '<h2 class="ledger-title">🐷 Mục tiêu khi về hưu</h2>' +
+    fieldVND('monthlyExpense', 'Chi phí sinh hoạt mong muốn / tháng lúc về hưu', s.monthlyExpense) +
+    '<div class="note">Áp dụng quy tắc rút 4%/năm: số tiền cần có khi về hưu ≈ chi phí năm × 25.</div>' +
+    '<div class="kpi-card" style="margin-top:10px" id="neededCorpusCard">' + neededCorpusHTML(d) + '</div>' +
+  '</div>' +
+
+  // Trang 6 (rule of 72)
+  '<div class="ledger-card">' +
+    '<span class="ledger-eyebrow">Trang 6</span>' +
+    '<h2 class="ledger-title">🔄 Minh hoạ quy tắc 72</h2>' +
+    fieldNumber('doublingPeriodOverride', 'Chu kỳ nhân đôi giả định', Number(d.doublingPeriod.toFixed(1)), 'năm / lần x2', 0.5, 40, 0.5) +
+    '<div id="doublingSection">' + doublingSectionHTML(s, d) + '</div>' +
+  '</div>' +
+
+  // Trang 7 (results)
+  '<div class="ledger-card">' +
+    '<span class="ledger-eyebrow">Trang 7</span>' +
+    '<h2 class="ledger-title">📆 Kết quả tích luỹ</h2>' +
+    '<div id="resultsSection">' + resultsSectionHTML(s, d) + '</div>' +
+  '</div>' +
+
+  // Trang 8 (suggestions)
+  '<div class="ledger-card">' +
+    '<span class="ledger-eyebrow">Trang 8</span>' +
+    '<h2 class="ledger-title">✨ Gợi ý đạt tỷ suất mong muốn</h2>' +
+    '<div id="suggestionSection">' + suggestionSectionHTML(s, d) + '</div>' +
+  '</div>' +
+
+  // Save / restore (backup code for moving between devices)
+  '<div class="ledger-card">' +
+    '<span class="ledger-eyebrow">Sao lưu</span>' +
+    '<h2 class="ledger-title">📋 Chuyển số liệu sang máy khác (tuỳ chọn)</h2>' +
+    '<div class="note" style="margin-top:0">Dữ liệu đã tự lưu trên máy này. Nếu muốn chuyển sang điện thoại/trình duyệt khác, bấm "Sao chép mã" rồi dán mã đó vào ô bên dưới ở máy kia.</div>' +
+    '<div style="display:flex;gap:8px;margin:10px 0">' +
+      '<button class="add-btn" data-action="copyCode">📋 Sao chép mã lưu</button>' +
+    '</div>' +
+    '<label class="block"><span class="ledger-label">Dán mã đã lưu vào đây</span>' +
+      '<textarea class="code-box" id="importBox" rows="3" placeholder="Dán mã lưu từ máy khác..."></textarea>' +
+    '</label>' +
+    '<button class="auto-btn" style="margin-top:8px" data-action="restoreCode">📥 Khôi phục từ mã</button>' +
+    '<div id="codeStatus"></div>' +
+  '</div>';
+}
+
+function fieldNumber(field, label, value, suffix, min, max, step) {
+  return '<label class="block">' +
+    '<span class="ledger-label">' + esc(label) + '</span>' +
+    '<div class="ledger-input-wrap">' +
+      '<input type="number" class="ledger-input" data-field="' + field + '" value="' + value + '" min="' + min + '" max="' + max + '" step="' + step + '">' +
+      '<span class="ledger-suffix">' + esc(suffix) + '</span>' +
+    '</div></label>';
+}
+function fieldVND(field, label, value) {
+  return '<label class="block">' +
+    '<span class="ledger-label">' + esc(label) + '</span>' +
+    '<div class="ledger-input-wrap">' +
+      '<input type="text" inputmode="numeric" class="ledger-input" data-field="' + field + '" data-type="vnd" value="' + fmtVND(value) + '">' +
+      '<span class="ledger-suffix">đ</span>' +
+    '</div></label>';
+}
+
+function trang1NoteHTML(s, d) {
+  const dt = d.doubleTarget === Infinity ? '—' : d.doubleTarget.toFixed(1);
+  return 'ℹ️ Còn ' + d.years + ' năm nữa để về hưu. Ở mức ' + s.desiredRate + '%/năm, tài sản sẽ x2 sau khoảng ' + dt + ' năm (quy tắc 72).';
+}
+
+function channelRowHTML(c, d) {
+  const fv = fvLumpSum(c.lumpSum, c.rate, d.months) + fvAnnuity(c.monthly, c.rate, d.months);
+  let amounts = '';
+  if (c.mode === 'lump' || c.mode === 'both') {
+    amounts += '<label class="block"><span class="ledger-label">Đầu tư một lần (ngay bây giờ)</span>' +
+      '<div class="ledger-input-wrap"><input type="text" inputmode="numeric" class="ledger-input" data-cfield="lumpSum" data-type="vnd" data-channel-id="' + c.id + '" value="' + fmtVND(c.lumpSum) + '"><span class="ledger-suffix">đ</span></div></label>';
+  }
+  if (c.mode === 'dca' || c.mode === 'both') {
+    amounts += '<label class="block"><span class="ledger-label">Đầu tư định kỳ / tháng</span>' +
+      '<div class="ledger-input-wrap"><input type="text" inputmode="numeric" class="ledger-input" data-cfield="monthly" data-type="vnd" data-channel-id="' + c.id + '" value="' + fmtVND(c.monthly) + '"><span class="ledger-suffix">đ</span></div></label>';
+  }
+  const modes = ['lump', 'dca', 'both'].map((m) =>
+    '<span class="mode-chip ' + (c.mode === m ? 'active' : '') + '" data-action="setMode" data-channel-id="' + c.id + '" data-mode="' + m + '">' + modeLabel(m) + '</span>'
+  ).join('');
+  return '<div class="channel-row">' +
+    '<div class="channel-top">' +
+      '<input class="channel-name" data-cfield="name" data-channel-id="' + c.id + '" value="' + esc(c.name) + '">' +
+      '<span class="risky-tag ' + (c.risky ? 'on' : 'off') + '" data-action="toggleRisky" data-channel-id="' + c.id + '">' + (c.risky ? 'Rủi ro cao' : 'An toàn') + '</span>' +
+      '<button class="del-btn" data-action="removeChannel" data-channel-id="' + c.id + '">🗑️</button>' +
+    '</div>' +
+    '<div class="mode-chips">' + modes + '</div>' +
+    '<div class="channel-amounts">' + amounts + '</div>' +
+    '<div class="rate-row"><span>Tỷ suất kỳ vọng</span>' +
+      '<input type="number" step="0.5" data-cfield="rate" data-channel-id="' + c.id + '" value="' + c.rate + '"><span>%/năm</span></div>' +
+    '<div class="mini-fv" id="miniFv-' + c.id + '">→ Giá trị dự kiến lúc về hưu: ' + fmtVND(fv) + ' đ</div>' +
+  '</div>';
+}
+
+function riskSectionHTML(s, d) {
+  const chips = Object.entries(RISK_RULES).map(([key, r]) =>
+    '<span class="chip ' + (s.riskRule === key ? 'active' : '') + '" style="' + (s.riskRule === key ? 'background:' + r.color + ';border-color:' + r.color : '') + '" data-action="setRiskRule" data-key="' + key + '">' +
+    r.label + ' (' + r.offset + '−tuổi = ' + d.maxRiskyByRule[key] + '%)</span>'
+  ).join('');
+  const markers = Object.entries(RISK_RULES).map(([key, r]) => {
+    const active = s.riskRule === key;
+    return '<div class="risk-gauge-marker" style="left:' + d.maxRiskyByRule[key] + '%;background:' + r.color + ';opacity:' + (active ? 1 : 0.45) + ';height:' + (active ? 20 : 14) + 'px;top:' + (active ? -5 : -2) + 'px" title="' + r.label + ': ' + r.offset + '−tuổi = ' + d.maxRiskyByRule[key] + '%"></div>';
+  }).join('');
+  const verdict = d.isOverRisk
+    ? '<div class="warn-box">⚠️ Tỷ trọng rủi ro đang vượt mức khuyến nghị theo công thức "' + RISK_RULES[s.riskRule].label + '". Cân nhắc giảm bớt vốn vào chứng khoán / bất động sản.</div>'
+    : '<div class="ok-box">✅ Danh mục đang nằm trong giới hạn rủi ro theo công thức "' + RISK_RULES[s.riskRule].label + '".</div>';
+  return '<div style="margin-top:6px;margin-bottom:4px;font-size:12.5px;font-weight:600">Công thức giới hạn rủi ro theo tuổi</div>' +
+    '<div class="chips" style="margin-bottom:4px">' + chips + '</div>' +
+    '<div class="risk-gauge"><div class="risk-gauge-fill" style="width:' + Math.min(100, d.riskyPct) + '%"></div>' + markers + '</div>' +
+    '<div class="note">🛡️ 3 mốc tham khảo ở ' + s.currentAge + ' tuổi: An toàn ' + d.maxRiskyByRule.safe + '% (100−tuổi) · Tiêu chuẩn ' + d.maxRiskyByRule.standard + '% (110−tuổi) · Tối đa ' + d.maxRiskyByRule.aggressive + '% (120−tuổi). Đang áp dụng: <b>' + RISK_RULES[s.riskRule].label + ' (' + d.maxRisky + '%)</b>. Tỷ trọng rủi ro hiện tại: ' + d.riskyPct.toFixed(1) + '%.</div>' +
+    verdict;
+}
+
+function pieSectionHTML(d) {
+  const donut = buildDonut(d);
+  return '<div class="donut-wrap"><div class="donut" style="' + donut.css + '"></div></div>' + donut.legend +
+    '<div class="note">ℹ️ Vòng tròn thể hiện tỷ trọng giá trị dự kiến của từng kênh trong tổng tài sản lúc về hưu.</div>';
+}
+
+function tableSectionHTML(s, d) {
+  let head = '<tr><th>Tuổi</th>' + s.channels.map((c) => '<th>' + esc(c.name) + '</th>').join('') + '<th>Tổng</th></tr>';
+  let body = d.yearlyTable.map((row) =>
+    '<tr><td>' + row.age + '</td>' + row.values.map((v) => '<td>' + d.scaled(v) + '</td>').join('') + '<td style="font-weight:700">' + d.scaled(row.total) + '</td></tr>'
+  ).join('');
+  return '<div class="table-wrap"><table><thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>';
+}
+
+function neededCorpusHTML(d) {
+  return '<div class="k-label">Số tiền cần có lúc về hưu</div><div class="k-value">' + fmtVND(d.neededCorpus) + ' đ</div>';
+}
+
+function doublingSectionHTML(s, d) {
+  return '<div class="note">ℹ️ Mặc định lấy theo tỷ suất bình quân danh mục (' + d.blendedRate.toFixed(2) + '%/năm → ' + (d.autoDoublingPeriod ? d.autoDoublingPeriod.toFixed(1) : '—') + ' năm/lần x2). Bạn có thể chỉnh để thử ví dụ "cứ 5 năm nhân đôi 1 lần".</div>' +
+    '<div class="double-grid">' +
+      '<div class="double-cell"><div class="dn">' + d.years + '</div><div class="dl">năm đầu tư (đến khi về hưu)</div></div>' +
+      '<div class="double-cell"><div class="dn">' + d.numDoublings.toFixed(1) + '</div><div class="dl">lần nhân đôi</div></div>' +
+      '<div class="double-cell"><div class="dn">2^' + d.numDoublings.toFixed(1) + ' ≈ ' + d.multiplier.toFixed(1) + 'x</div><div class="dl">hệ số tăng tài sản</div></div>' +
+    '</div>' +
+    '<div class="grid2" style="margin-top:8px">' +
+      '<div class="kpi-card"><div class="k-label">Ví dụ: ' + fmtVND(d.illustrationBase) + ' đ đầu tư 1 lần, giữ nguyên không thêm</div><div class="k-value">≈ ' + fmtVND(d.projectedByRule72) + ' đ</div></div>' +
+      '<div class="kpi-card"><div class="k-label">Tính chính xác theo lãi kép (cùng tỷ suất bình quân)</div><div class="k-value">' + fmtVND(d.projectedExactCompound) + ' đ</div></div>' +
+    '</div>' +
+    '<div class="note">ℹ️ Quy tắc 72 chỉ là ước lượng nhanh; số lãi kép chính xác bên phải luôn đáng tin hơn. Đầu tư càng sớm càng có nhiều "lần nhân đôi" hơn.</div>';
+}
+
+function resultsSectionHTML(s, d) {
+  const gapBox = d.fvPortfolio >= d.neededCorpus
+    ? '<div class="ok-box">✅ Với danh mục hiện tại, bạn dự kiến vượt mục tiêu về hưu khoảng ' + fmtVND(d.fvPortfolio - d.neededCorpus) + ' đ.</div>'
+    : '<div class="warn-box">⚠️ Danh mục hiện tại còn thiếu khoảng ' + fmtVND(d.neededCorpus - d.fvPortfolio) + ' đ so với mục tiêu về hưu.</div>';
+  const chips = SCENARIO_DEFS.map((sc) =>
+    '<span class="chip ' + (s.scenarios[sc.key] ? 'active' : '') + '" style="' + (s.scenarios[sc.key] ? 'background:' + sc.color + ';border-color:' + sc.color : '') + '" data-action="toggleScenario" data-key="' + sc.key + '">' + sc.label + ' · ' + sc.rate + '%</span>'
+  ).join('');
+  return '<div class="seal"><div class="big">x' + d.multiplier.toFixed(1) + '</div><div class="small">Sau ' + d.years + ' năm · ' + d.numDoublings.toFixed(1) + ' lần x2</div></div>' +
+    '<div class="grid2" style="margin-bottom:10px">' +
+      '<div class="kpi-card"><div class="k-label">Tài sản lúc về hưu (danh mục thực tế)</div><div class="k-value">' + fmtVND(d.fvPortfolio) + ' đ</div></div>' +
+      '<div class="kpi-card"><div class="k-label">Tài sản lúc về hưu (mục tiêu mong muốn)</div><div class="k-value">' + fmtVND(d.fvTarget) + ' đ</div></div>' +
+    '</div>' +
+    gapBox +
+    '<div style="margin-top:16px;margin-bottom:8px;font-size:13px;font-weight:600">So sánh các kịch bản tăng trưởng</div>' +
+    '<div class="chips">' + chips + '</div>' +
+    '<div class="chart-svg-wrap">' + buildLineChartSVG(d) + '</div>';
+}
+
+function suggestionSectionHTML(s, d) {
+  const sg = d.suggestion;
+  if (sg.type === 'empty') return '<div class="note">ℹ️ Nhập số tiền đầu tư ở Trang 2 để xem gợi ý.</div>';
+  if (sg.type === 'flat') return '<div class="note">ℹ️ Các kênh đang có tỷ suất bằng nhau nên không thể tối ưu bằng cách đổi tỷ trọng — hãy điều chỉnh trực tiếp tỷ suất kỳ vọng của từng kênh.</div>';
+  if (sg.type === 'safe-enough') return '<div class="ok-box">✅ Chỉ riêng nhóm kênh an toàn (' + d.rSafe.toFixed(2) + '%/năm) đã đủ đạt mục tiêu ' + s.desiredRate + '%/năm — bạn không nhất thiết phải tăng thêm rủi ro.</div>';
+  if (sg.type === 'impossible') return '<div class="warn-box">⚠️ Ngay cả khi dồn 100% vốn vào nhóm rủi ro cao nhất (' + sg.rRisky.toFixed(2) + '%/năm), danh mục vẫn không đạt mục tiêu ' + s.desiredRate + '%/năm. Cần tìm kênh có tỷ suất cao hơn hoặc hạ thấp mục tiêu.</div>';
+  let html = '<div class="verdict" style="background:rgba(184,134,46,0.08)"><b>Cách 1 — đổi tỷ trọng:</b> tăng tỷ trọng vốn ở nhóm rủi ro cao từ <b>' + d.riskyPct.toFixed(1) + '%</b> lên khoảng <b>' + sg.neededRiskyWeightPct.toFixed(1) + '%</b> (giữ nguyên tỷ suất từng kênh) để đạt ' + s.desiredRate + '%/năm.' +
+    (sg.overLimit ? ' Mức này <b>vượt giới hạn an toàn theo tuổi (' + d.maxRisky + '%)</b> — khó đạt mục tiêu chỉ bằng cách tăng rủi ro mà vẫn an toàn.' : '') + '</div>';
+  if (sg.rRiskyNeeded !== null) {
+    html += '<div class="verdict" style="background:rgba(47,122,107,0.08)"><b>Cách 2 — giữ nguyên tỷ trọng, nâng tỷ suất:</b> giữ tỷ trọng rủi ro ở mức hiện tại (' + d.riskyPct.toFixed(1) + '%), nhưng tỷ suất trung bình của nhóm rủi ro cao cần đạt khoảng <b>' + sg.rRiskyNeeded.toFixed(2) + '%/năm</b> (hiện tại ' + d.rRisky.toFixed(2) + '%/năm).</div>';
+  }
+  return html;
+}
+
+// ================= Partial update (typing) =================
+function updateComputed() {
+  const d = computeDerived(state);
+  const byId = (id) => document.getElementById(id);
+  if (byId('trang1Note')) byId('trang1Note').innerHTML = trang1NoteHTML(state, d);
+  state.channels.forEach((c) => {
+    const el = byId('miniFv-' + c.id);
+    if (el) {
+      const fv = fvLumpSum(c.lumpSum, c.rate, d.months) + fvAnnuity(c.monthly, c.rate, d.months);
+      el.textContent = '→ Giá trị dự kiến lúc về hưu: ' + fmtVND(fv) + ' đ';
+    }
+  });
+  if (byId('riskSection')) byId('riskSection').innerHTML = riskSectionHTML(state, d);
+  if (byId('pieSection')) byId('pieSection').innerHTML = pieSectionHTML(d);
+  if (byId('tableSection')) byId('tableSection').innerHTML = tableSectionHTML(state, d);
+  if (byId('neededCorpusCard')) byId('neededCorpusCard').innerHTML = neededCorpusHTML(d);
+  if (byId('doublingSection')) byId('doublingSection').innerHTML = doublingSectionHTML(state, d);
+  if (byId('resultsSection')) byId('resultsSection').innerHTML = resultsSectionHTML(state, d);
+  if (byId('suggestionSection')) byId('suggestionSection').innerHTML = suggestionSectionHTML(state, d);
+}
+
+// ================= Save-code (backup/transfer) =================
+function b64EncodeUnicode(str) {
+  return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (_, p1) => String.fromCharCode('0x' + p1)));
+}
+function b64DecodeUnicode(str) {
+  return decodeURIComponent(atob(str).split('').map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+}
+async function copyCode() {
+  const box = document.getElementById('codeStatus');
+  try {
+    const code = b64EncodeUnicode(JSON.stringify(state));
+    await navigator.clipboard.writeText(code);
+    box.innerHTML = '<div class="ok-box">✅ Đã sao chép mã lưu vào bộ nhớ tạm.</div>';
+  } catch (e) {
+    box.innerHTML = '<div class="warn-box">⚠️ Không sao chép được — hãy bấm giữ vào ô mã để copy thủ công.</div>';
+  }
+}
+function restoreCode() {
+  const box = document.getElementById('codeStatus');
+  const text = document.getElementById('importBox').value;
+  try {
+    const d = JSON.parse(b64DecodeUnicode(text.trim()));
+    state = Object.assign({}, DEFAULT_STATE, d);
+    if (state.channels && state.channels.length) idCounter = Math.max(...state.channels.map((c) => c.id)) + 1;
+    persist();
+    render();
+    document.getElementById('codeStatus').innerHTML = '<div class="ok-box">✅ Đã khôi phục số liệu từ mã lưu.</div>';
+  } catch (e) {
+    box.innerHTML = '<div class="warn-box">⚠️ Mã lưu không hợp lệ — kiểm tra lại đã dán đủ và đúng chưa.</div>';
+  }
+}
+
+// ================= Actions =================
+function addChannel() {
+  idCounter += 1;
+  state.channels.push({ id: idCounter, name: 'Kênh mới', rate: 8, risky: false, mode: 'dca', lumpSum: 0, monthly: 1000000 });
+}
+function removeChannel(id) { state.channels = state.channels.filter((c) => c.id !== id); }
+function resetAll() {
+  state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+  idCounter = 100;
+  persist();
+  render();
+}
+
+// ================= Event delegation =================
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-action]');
+  if (!btn) return;
+  const action = btn.dataset.action;
+  const cid = btn.dataset.channelId ? Number(btn.dataset.channelId) : null;
+  if (action === 'addChannel') { addChannel(); persist(); render(); }
+  else if (action === 'removeChannel') { removeChannel(cid); persist(); render(); }
+  else if (action === 'toggleRisky') {
+    const c = state.channels.find((x) => x.id === cid);
+    if (c) c.risky = !c.risky;
+    persist(); render();
+  } else if (action === 'setMode') {
+    const c = state.channels.find((x) => x.id === cid);
+    if (c) {
+      c.mode = btn.dataset.mode;
+      if (c.mode === 'lump') c.monthly = 0;
+      if (c.mode === 'dca') c.lumpSum = 0;
+    }
+    persist(); render();
+  } else if (action === 'setRiskRule') { state.riskRule = btn.dataset.key; persist(); render(); }
+  else if (action === 'toggleScenario') { state.scenarios[btn.dataset.key] = !state.scenarios[btn.dataset.key]; persist(); render(); }
+  else if (action === 'copyCode') { copyCode(); }
+  else if (action === 'restoreCode') { restoreCode(); }
+  else if (action === 'reset') { if (confirm('Xoá toàn bộ số liệu đã lưu và về lại mặc định?')) resetAll(); }
+});
+
+document.addEventListener('input', (e) => {
+  const el = e.target;
+  if (el.dataset.field) {
+    if (el.dataset.type === 'vnd') {
+      const v = parseDigits(el.value);
+      el.value = fmtVND(v);
+      state[el.dataset.field] = v;
+    } else {
+      const raw = el.value;
+      state[el.dataset.field] = raw === '' ? null : Number(raw);
+    }
+    persist();
+    updateComputed();
+  } else if (el.dataset.cfield) {
+    const c = state.channels.find((x) => String(x.id) === el.dataset.channelId);
+    if (!c) return;
+    if (el.dataset.cfield === 'name') {
+      c.name = el.value;
+    } else if (el.dataset.type === 'vnd') {
+      const v = parseDigits(el.value);
+      el.value = fmtVND(v);
+      c[el.dataset.cfield] = v;
+    } else {
+      c[el.dataset.cfield] = Number(el.value);
+    }
+    persist();
+    updateComputed();
+  }
+});
+
+render();
+</script>
+</body>
+</html>

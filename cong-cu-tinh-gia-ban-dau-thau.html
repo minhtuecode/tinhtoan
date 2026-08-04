@@ -1,0 +1,1057 @@
+<!-- Nút quay lại trang chủ -->
+<div style="max-width: 480px; margin: 12px auto 0; padding: 0 16px; text-align: left;">
+  <a href="index.html" style="display: inline-flex; align-items: center; gap: 6px; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; color: #1B3A2B; text-decoration: none; background: rgba(27,58,43,0.08); padding: 6px 12px; border-radius: 4px; border: 1px solid rgba(27,58,43,0.2);">
+    ← Quay lại trang chủ
+  </a>
+</div>
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Lợi nhuận &amp; Giá thầu · EPC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --bg:#f7f5f0; --card:#ffffff; --border:#e7e1d2; --border2:#d9d0ba;
+    --text:#23201a; --text2:#4a4536; --muted:#726c58; --muted2:#a49c85;
+    --amber:#b45309; --amber-solid:#f59e0b; --amber-dim:rgba(180,83,9,.07); --amber-bd:rgba(180,83,9,.28);
+    --good:#15803d; --bad:#dc2626; --row-border:#efe9db;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',ui-sans-serif,system-ui;-webkit-font-smoothing:antialiased;}
+  .mono{font-family:'IBM Plex Mono',ui-monospace,monospace;}
+  .wrap{max-width:480px;margin:0 auto;padding:20px 16px 48px;}
+  header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:18px;}
+  .eyebrow{font-size:10.5px;text-transform:uppercase;letter-spacing:.14em;color:rgba(245,158,11,.8);font-weight:600;margin-bottom:4px;}
+  h1{font-size:19px;font-weight:700;margin:0;line-height:1.2;}
+  #exportBtn{flex-shrink:0;background:var(--card);border:1px solid var(--border2);color:var(--amber);font-size:12px;font-weight:600;padding:8px 12px;border-radius:8px;cursor:pointer;margin-top:2px;}
+  #exportBtn:hover{border-color:var(--amber);}
+
+  .tabs{display:flex;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:4px;margin-bottom:20px;gap:4px;}
+  .tabs button{flex:1;font-size:13px;font-weight:600;padding:8px 0;border-radius:6px;border:none;background:transparent;color:var(--muted);cursor:pointer;}
+  .tabs button.active{background:var(--amber-solid);color:#ffffff;}
+
+  .pane{display:none;}
+  .pane.active{display:block;}
+  .space > * + *{margin-top:20px;}
+
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .grid-1{display:grid;grid-template-columns:1fr;gap:12px;}
+  label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:500;margin-bottom:4px;}
+  .moneyfield,.pctfield{position:relative;}
+  .moneyfield input,.pctfield input{
+    width:100%;background:var(--card);border:1px solid var(--border2);border-radius:8px;
+    padding:10px 34px 10px 12px;color:var(--text);font-size:15px;outline:none;
+  }
+  .moneyfield input:focus,.pctfield input:focus{border-color:var(--amber);}
+  .moneyfield span,.pctfield span{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--muted2);font-size:12px;}
+  .field.small input{padding:7px 26px 7px 10px;font-size:13px;}
+  .field.small{width:96px;flex-shrink:0;}
+
+  .stats{display:flex;gap:10px;flex-wrap:wrap;}
+  .stat{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;flex:1;min-width:135px;}
+  .stat-label{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:500;margin-bottom:4px;}
+  .stat-value{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:600;}
+  .stat-sub{font-size:11px;color:var(--muted2);margin-top:2px;}
+  .amber{color:var(--amber);} .good{color:var(--good);} .bad{color:var(--bad);}
+
+  .section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px;flex-wrap:wrap;}
+  h3{font-size:13px;font-weight:600;color:var(--text);letter-spacing:.01em;margin:0;}
+  .add-row{display:flex;align-items:center;gap:6px;}
+  .add-row input{width:56px;background:var(--card);border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;font-family:'IBM Plex Mono',monospace;outline:none;}
+  .add-row input:focus{border-color:var(--amber);}
+  .add-row button{background:var(--amber-solid);color:#ffffff;border:none;font-size:12px;font-weight:600;padding:5px 10px;border-radius:6px;cursor:pointer;}
+  .add-row button:hover{background:var(--amber);}
+
+  .tbl-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:8px;}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;}
+  thead tr{background:var(--card);color:var(--muted);text-align:left;}
+  th{padding:8px 10px;font-weight:500;}
+  th.r,td.r{text-align:right;}
+  tbody tr{border-top:1px solid var(--row-border);font-family:'IBM Plex Mono',monospace;color:var(--text2);}
+  td{padding:6px 10px;}
+  .rmbtn{background:none;border:none;color:var(--muted2);font-size:15px;cursor:pointer;line-height:1;padding:0 4px;}
+  .rmbtn:hover{color:var(--bad);}
+  .note{font-size:11px;color:var(--muted2);line-height:1.5;margin-top:6px;}
+  .empty-row td{text-align:center;color:var(--muted2);font-size:12px;padding:16px;}
+
+  .card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px;}
+  .card > * + *{margin-top:12px;}
+  .card h3{margin-bottom:2px;}
+
+  .conv-row{border-top:1px solid var(--row-border);padding-top:12px;display:flex;align-items:flex-end;gap:12px;}
+  .conv-row:first-of-type{border-top:none;padding-top:0;}
+  .conv-out{flex:1;font-size:12px;color:var(--muted);padding-bottom:6px;}
+  .conv-out .num{font-family:'IBM Plex Mono',monospace;font-weight:600;}
+
+  .box{border-radius:8px;padding:14px;border:1px solid;}
+  .box .row{display:flex;justify-content:space-between;align-items:baseline;}
+  .box .row + .row{margin-top:6px;}
+  .box .k{font-size:12px;color:var(--muted);}
+  .box .v{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:17px;}
+  .box .v.small{font-size:14px;font-weight:600;}
+
+  .select-inline{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--muted);}
+  .select-inline select{background:var(--card);border:1px solid var(--border2);border-radius:6px;padding:4px 6px;color:var(--text);font-family:'IBM Plex Mono',monospace;outline:none;}
+  .linkbtn{background:none;border:none;color:rgba(245,158,11,.9);font-size:11px;text-decoration:underline;text-underline-offset:2px;cursor:pointer;padding:0;margin-bottom:8px;display:inline-block;}
+  .linkbtn:hover{color:var(--amber);}
+  .chipbtn{background:var(--card);border:1px solid var(--border2);color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;padding:4px 10px;border-radius:999px;cursor:pointer;}
+  .chipbtn:hover{border-color:var(--amber);}
+  .chipbtn.active{border-color:var(--amber);color:var(--amber);background:rgba(245,158,11,.08);}
+  .field.auto{width:auto;}
+  .feerow{display:flex;align-items:flex-end;gap:8px;}
+  .feerow .field{flex:1;}
+  .modetoggle{display:flex;border:1px solid var(--border2);border-radius:6px;overflow:hidden;flex-shrink:0;margin-bottom:1px;}
+  .modebtn{background:var(--card);border:none;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;padding:9px 9px;cursor:pointer;min-width:30px;}
+  .modebtn+.modebtn{border-left:1px solid var(--border2);}
+  .modebtn.active{background:var(--amber-solid);color:#fff;}
+  .custom-add{display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
+  .custom-add input[type=text]{width:110px;background:var(--card);border:1px solid var(--border2);border-radius:6px;padding:5px 8px;font-size:13px;color:var(--text);outline:none;}
+  .custom-add input[type=text]:focus{border-color:var(--amber-solid);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">Công cụ tính giá · EPC</div>
+      <h1>Lợi nhuận &amp; Giá thầu</h1>
+    </div>
+    <button id="exportBtn" onclick="exportExcel()">⬇ Xuất Excel</button>
+  </header>
+
+  <div class="tabs">
+    <button id="tabBtnRetail" class="active" onclick="switchTab('retail')">Bán lẻ</button>
+    <button id="tabBtnBid" onclick="switchTab('bid')">Thầu nâng cao</button>
+    <button id="tabBtnSimple" onclick="switchTab('simple')">Thầu đơn giản</button>
+  </div>
+
+  <!-- ============ RETAIL PANE ============ -->
+  <div id="paneRetail" class="pane active space">
+    <div class="grid-2">
+      <div class="field">
+        <label>Giá đầu vào (giá net)</label>
+        <div class="moneyfield"><input id="r_cost" inputmode="numeric" oninput="onMoneyInput(this,'retail','cost')" /><span>đ</span></div>
+      </div>
+      <div class="field">
+        <label>Giá bán</label>
+        <div class="moneyfield"><input id="r_price" inputmode="numeric" oninput="onMoneyInput(this,'retail','price')" /><span>đ</span></div>
+      </div>
+    </div>
+
+    <div class="stats" id="r_stats"></div>
+
+    <div>
+      <div class="section-head">
+        <h3>Tác động khi giảm giá bán</h3>
+        <div class="add-row">
+          <input id="r_newDiscount" placeholder="+%" onkeydown="if(event.key==='Enter')addDiscount('retail')" />
+          <button onclick="addDiscount('retail')">Thêm</button>
+        </div>
+      </div>
+      <div class="tbl-wrap"><div id="r_discountTable"></div></div>
+      <p class="note">Lợi nhuận (%) = lãi còn lại ÷ giá net gốc — toàn bộ app quy về chỉ số này, phản ánh đúng tiền thực thu về so với vốn bỏ ra.</p>
+    </div>
+
+    <div class="card">
+      <h3>Quy đổi nhanh: giảm giá ⇄ điểm lợi nhuận trên giá net</h3>
+      <div class="note" id="r_convExplain"></div>
+      <div class="conv-row">
+        <div class="field small">
+          <label>Giảm trên giá bán</label>
+          <div class="pctfield"><input id="r_convDiscount" inputmode="decimal" oninput="onPercentInput(this,'retail','convDiscount')" /><span>%</span></div>
+        </div>
+        <div class="conv-out" id="r_convForwardOut"></div>
+      </div>
+      <div class="conv-row">
+        <div class="field small">
+          <label>Muốn LN/net còn</label>
+          <div class="pctfield"><input id="r_convTargetNet" inputmode="decimal" oninput="onPercentInput(this,'retail','convTargetNet')" /><span>%</span></div>
+        </div>
+        <div class="conv-out" id="r_convReverseOut"></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-head">
+        <h3>Nếu chi phí (giá net) tăng thêm</h3>
+        <div class="add-row">
+          <input id="r_newCostIncr" placeholder="+%" onkeydown="if(event.key==='Enter')addCostIncr('retail')" />
+          <button onclick="addCostIncr('retail')">Thêm</button>
+        </div>
+      </div>
+      <div class="tbl-wrap"><div id="r_costIncrTable"></div></div>
+      <p class="note">Giữ nguyên giá bán hiện tại, chỉ tăng giá net (chi phí đầu vào) — lợi nhuận dưới đây luôn tính trên giá net mới.</p>
+    </div>
+
+    <div class="card">
+      <h3>Đưa về mức lợi nhuận mong muốn (trên giá net)</h3>
+      <div class="conv-row" style="border-top:none;padding-top:0;">
+        <div class="field small">
+          <label>Mục tiêu</label>
+          <div class="pctfield"><input id="r_targetMargin" inputmode="decimal" oninput="onPercentInput(this,'retail','targetMargin')" /><span>%</span></div>
+        </div>
+        <div class="conv-out" id="r_targetCurrent"></div>
+      </div>
+      <div id="r_targetOut"></div>
+    </div>
+  </div>
+
+  <!-- ============ BID PANE ============ -->
+  <div id="paneBid" class="pane space">
+    <div class="grid-1">
+      <div class="field">
+        <label>Giá nét (giá gốc)</label>
+        <div class="moneyfield"><input id="b_netPrice" inputmode="numeric" oninput="onMoneyInput(this,'bid','netPrice')" /><span>đ</span></div>
+      </div>
+      <div class="field">
+        <label>Giá dự thầu dự kiến</label>
+        <div class="moneyfield"><input id="b_bidPrice" inputmode="numeric" oninput="onMoneyInput(this,'bid','bidPrice')" /><span>đ</span></div>
+      </div>
+      <div class="field">
+        <label>Giá dự toán gói thầu</label>
+        <div class="moneyfield"><input id="b_estimatePrice" inputmode="numeric" oninput="onMoneyInput(this,'bid','estimatePrice')" /><span>đ</span></div>
+      </div>
+    </div>
+
+    <div class="stats" id="b_stats"></div>
+
+    <div class="card">
+      <h3>Chi phí thực hiện dự án (do thời gian &amp; vốn vay)</h3>
+      <p class="note">Dự án kéo dài nên cần dùng vốn vay trong suốt thời gian thi công — các phí dưới đây được cộng vào chi phí trước khi tính lợi nhuận cuối cùng trên giá net.</p>
+
+      <div class="conv-row" style="align-items:flex-end;border-top:none;padding-top:0;">
+        <div class="field small" style="width:80px;">
+          <label>Lãi vay/năm</label>
+          <div class="pctfield"><input id="b_loanRatePct" inputmode="decimal" oninput="onPercentInput(this,'bid','loanRatePct')" /><span>%</span></div>
+        </div>
+        <div class="field small" style="width:80px;">
+          <label>Số ngày TC</label>
+          <div class="pctfield"><input id="b_projectDays" inputmode="decimal" oninput="onPercentInput(this,'bid','projectDays')" /><span></span></div>
+        </div>
+        <div class="field small" style="width:80px;">
+          <label>% vốn vay</label>
+          <div class="pctfield"><input id="b_loanRatioPct" inputmode="decimal" oninput="onPercentInput(this,'bid','loanRatioPct')" /><span>%</span></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;">
+        <button class="chipbtn" id="b_day60" onclick="setProjectDays(60)">60 ngày</button>
+        <button class="chipbtn" id="b_day90" onclick="setProjectDays(90)">90 ngày</button>
+        <button class="chipbtn" id="b_day120" onclick="setProjectDays(120)">120 ngày</button>
+      </div>
+      <div class="note" id="b_bankFeeOut"></div>
+
+      <div class="feerow">
+        <div class="field auto">
+          <label>Phí vận chuyển</label>
+          <div class="pctfield"><input id="b_shippingVal" inputmode="decimal" oninput="onFeeInput(this,'bid','shipping')" /><span id="b_shippingUnit">%</span></div>
+        </div>
+        <div class="modetoggle">
+          <button class="modebtn active" id="b_shippingModePct" onclick="setFeeMode('bid','shipping','%')">%</button>
+          <button class="modebtn" id="b_shippingModeVnd" onclick="setFeeMode('bid','shipping','vnd')">đ</button>
+        </div>
+      </div>
+      <div class="feerow">
+        <div class="field auto">
+          <label>Phí nghiệm thu / thanh toán</label>
+          <div class="pctfield"><input id="b_acceptanceVal" inputmode="decimal" oninput="onFeeInput(this,'bid','acceptance')" /><span id="b_acceptanceUnit">%</span></div>
+        </div>
+        <div class="modetoggle">
+          <button class="modebtn active" id="b_acceptanceModePct" onclick="setFeeMode('bid','acceptance','%')">%</button>
+          <button class="modebtn" id="b_acceptanceModeVnd" onclick="setFeeMode('bid','acceptance','vnd')">đ</button>
+        </div>
+      </div>
+      <div class="feerow">
+        <div class="field auto">
+          <label>Phí quản lý</label>
+          <div class="pctfield"><input id="b_managementVal" inputmode="decimal" oninput="onFeeInput(this,'bid','management')" /><span id="b_managementUnit">%</span></div>
+        </div>
+        <div class="modetoggle">
+          <button class="modebtn active" id="b_managementModePct" onclick="setFeeMode('bid','management','%')">%</button>
+          <button class="modebtn" id="b_managementModeVnd" onclick="setFeeMode('bid','management','vnd')">đ</button>
+        </div>
+      </div>
+      <div class="feerow">
+        <div class="field auto">
+          <label>Chi phí khác</label>
+          <div class="pctfield"><input id="b_otherCostVal" inputmode="decimal" oninput="onFeeInput(this,'bid','otherCost')" /><span id="b_otherCostUnit">%</span></div>
+        </div>
+        <div class="modetoggle">
+          <button class="modebtn active" id="b_otherCostModePct" onclick="setFeeMode('bid','otherCost','%')">%</button>
+          <button class="modebtn" id="b_otherCostModeVnd" onclick="setFeeMode('bid','otherCost','vnd')">đ</button>
+        </div>
+      </div>
+
+      <div style="margin-top:4px;">
+        <h3 style="margin-bottom:8px;">Chi phí tùy chọn (thêm mới)</h3>
+        <div class="custom-add">
+          <input type="text" id="b_newCustomName" placeholder="Tên chi phí" />
+          <input id="b_newCustomVal" placeholder="Giá trị" style="width:64px;background:var(--card);border:1px solid var(--border2);border-radius:6px;padding:5px 8px;font-size:13px;color:var(--text);outline:none;" />
+          <div class="modetoggle">
+            <button class="modebtn active" id="b_newCustomModePct" onclick="setNewCustomMode('bid','%')">%</button>
+            <button class="modebtn" id="b_newCustomModeVnd" onclick="setNewCustomMode('bid','vnd')">đ</button>
+          </div>
+          <button onclick="addCustomCost('bid')" style="background:var(--amber-solid);color:#fff;border:none;font-size:12px;font-weight:600;padding:6px 10px;border-radius:6px;cursor:pointer;">Thêm</button>
+        </div>
+        <div class="tbl-wrap" style="margin-top:8px;"><div id="b_customCostTable"></div></div>
+      </div>
+
+      <div class="tbl-wrap"><div id="b_costBreakdownTable"></div></div>
+    </div>
+
+    <div class="card">
+      <h3>Quy đổi nhanh: giảm giá ⇄ điểm lợi nhuận trên giá net</h3>
+      <div class="note" id="b_convExplain"></div>
+      <div class="conv-row">
+        <div class="field small">
+          <label>Giảm trên giá thầu</label>
+          <div class="pctfield"><input id="b_convDiscount" inputmode="decimal" oninput="onPercentInput(this,'bid','convDiscount')" /><span>%</span></div>
+        </div>
+        <div class="conv-out" id="b_convForwardOut"></div>
+      </div>
+      <div class="conv-row">
+        <div class="field small">
+          <label>Muốn LN/net còn</label>
+          <div class="pctfield"><input id="b_convTargetNet" inputmode="decimal" oninput="onPercentInput(this,'bid','convTargetNet')" /><span>%</span></div>
+        </div>
+        <div class="conv-out" id="b_convReverseOut"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Tính ngược: muốn giảm X% trên giá dự toán</h3>
+      <div class="conv-row" style="border-top:none;padding-top:0;">
+        <div class="field small">
+          <label>Giảm giá</label>
+          <div class="pctfield"><input id="b_targetDiscountPct" inputmode="decimal" oninput="onPercentInput(this,'bid','targetDiscountPct')" /><span>%</span></div>
+        </div>
+        <div class="conv-out" id="b_targetNote"></div>
+      </div>
+      <div id="b_targetBox"></div>
+    </div>
+
+    <div>
+      <div class="section-head">
+        <h3>Nếu chi phí (giá net) tăng thêm</h3>
+        <div class="add-row">
+          <input id="b_newCostIncr" placeholder="+%" onkeydown="if(event.key==='Enter')addCostIncr('bid')" />
+          <button onclick="addCostIncr('bid')">Thêm</button>
+        </div>
+      </div>
+      <div class="tbl-wrap"><div id="b_costIncrTable"></div></div>
+      <p class="note">Giữ nguyên giá dự thầu hiện tại, chỉ tăng giá net (chi phí đầu vào) — xem lợi nhuận thực trên giá net mới còn lại bao nhiêu.</p>
+    </div>
+
+    <div>
+      <div class="section-head">
+        <h3>Bảng biên độ giá</h3>
+        <div style="display:flex;gap:10px;">
+          <span class="select-inline">Biên độ
+            <select id="b_rangePct" onchange="onSelectInput(this,'bid','rangePct')">
+              <option value="10">±10%</option>
+              <option value="20" selected>±20%</option>
+              <option value="30">±30%</option>
+            </select>
+          </span>
+          <span class="select-inline">Bước
+            <select id="b_step" onchange="onSelectInput(this,'bid','step')">
+              <option value="1">1%</option>
+              <option value="2" selected>2%</option>
+              <option value="5">5%</option>
+            </select>
+          </span>
+        </div>
+      </div>
+      <button class="linkbtn" id="b_resetBase" onclick="resetTableBase()"></button>
+      <div class="tbl-wrap"><div id="b_rangeTable"></div></div>
+      <p class="note">"Giảm so DT" = % giảm giá dự thầu so với giá dự toán gói thầu. "CP khác" = chi phí khác tính theo % trên từng mức giá dự thầu. "LN thực" = giá dự thầu − giá nét − CP khác.</p>
+    </div>
+  </div>
+
+  <!-- ============ SIMPLE BID PANE ============ -->
+  <div id="paneSimple" class="pane space">
+    <div class="grid-2">
+      <div class="field">
+        <label>Giá net</label>
+        <div class="moneyfield"><input id="s_netPrice" inputmode="numeric" oninput="onMoneyInput(this,'simple','netPrice')" /><span>đ</span></div>
+      </div>
+      <div class="field">
+        <label>Giá bán (giá dự thầu)</label>
+        <div class="moneyfield"><input id="s_bidPrice" inputmode="numeric" oninput="onMoneyInput(this,'simple','bidPrice')" /><span>đ</span></div>
+      </div>
+      <div class="field">
+        <label>Giảm giá</label>
+        <div class="pctfield"><input id="s_discountPct" inputmode="decimal" oninput="onPercentInput(this,'simple','discountPct')" /><span>%</span></div>
+      </div>
+      <div class="field">
+        <label>Chi phí khác</label>
+        <div class="pctfield"><input id="s_otherCostPct" inputmode="decimal" oninput="onPercentInput(this,'simple','otherCostPct')" /><span>%</span></div>
+      </div>
+    </div>
+
+    <div class="stats" id="s_stats"></div>
+
+    <div>
+      <div class="section-head">
+        <h3>Chi phí tùy chọn</h3>
+      </div>
+      <div class="custom-add">
+        <input type="text" id="s_newCustomName" placeholder="Tên chi phí" />
+        <input id="s_newCustomVal" placeholder="Giá trị" style="width:64px;background:var(--card);border:1px solid var(--border2);border-radius:6px;padding:5px 8px;font-size:13px;color:var(--text);outline:none;" />
+        <div class="modetoggle">
+          <button class="modebtn active" id="s_newCustomModePct" onclick="setNewCustomMode('simple','%')">%</button>
+          <button class="modebtn" id="s_newCustomModeVnd" onclick="setNewCustomMode('simple','vnd')">đ</button>
+        </div>
+        <button onclick="addCustomCost('simple')" style="background:var(--amber-solid);color:#fff;border:none;font-size:12px;font-weight:600;padding:6px 10px;border-radius:6px;cursor:pointer;">Thêm</button>
+      </div>
+      <div class="tbl-wrap" style="margin-top:8px;"><div id="s_customCostTable"></div></div>
+      <p class="note">Các chi phí tùy chọn (% trên giá sau giảm giá, hoặc số tiền cố định) được cộng dồn để ra lợi nhuận cuối cùng trên giá net.</p>
+    </div>
+
+    <div class="card">
+      <div id="s_detailBox"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---------- state ----------
+const state = {
+  retail: {
+    cost: 25000000, price: 50000000,
+    discounts: [2,3,5], targetMargin: 25,
+    convDiscount: 30, convTargetNet: 70,
+    costIncr: [5,10,15]
+  },
+  bid: {
+    netPrice: 1400000000, bidPrice: 1600000000, estimatePrice: 2000000000,
+    loanRatePct: 10, projectDays: 90, loanRatioPct: 70,
+    shippingMode: '%', shippingVal: 1,
+    acceptanceMode: '%', acceptanceVal: 1,
+    managementMode: '%', managementVal: 3,
+    otherCostMode: '%', otherCostVal: 5,
+    customCosts: [],
+    targetDiscountPct: 15,
+    step: 2, rangePct: 20, tableBase: 1600000000,
+    convDiscount: 10, convTargetNet: 10,
+    costIncr: [5,10,15]
+  },
+  simple: {
+    netPrice: 1400000000, bidPrice: 1600000000,
+    discountPct: 10, otherCostPct: 5,
+    customCosts: []
+  }
+};
+let tempCustomMode = { bid: '%', simple: '%' };
+let customCostSeq = 1;
+
+// ---------- format helpers ----------
+function fmtInt(n){ return Math.round(n||0).toLocaleString('vi-VN',{maximumFractionDigits:0}); }
+function fmtPct(n){ const v=n||0; let s=v.toFixed(2).replace(/\.00$/,'').replace(/(\.\d)0$/,'$1'); return s; }
+function fmtFactor(n){ let s=(n||0).toFixed(2); s=s.replace(/0$/,'').replace(/\.$/,''); return s; }
+function parsePercentRaw(v){
+  let s=String(v).replace(/[^\d.]/g,'');
+  const firstDot=s.indexOf('.');
+  if(firstDot!==-1){ s = s.slice(0,firstDot+1) + s.slice(firstDot+1).replace(/\./g,''); }
+  return (s===''||s==='.') ? 0 : parseFloat(s);
+}
+function parseMoney(v){
+  const digits = String(v).replace(/[^\d]/g,'');
+  return digits==='' ? 0 : parseInt(digits,10);
+}
+
+// ---------- input handlers (persistent fields) ----------
+function onMoneyInput(el, tab, field){
+  const digits = el.value.replace(/[^\d]/g,'');
+  const n = digits==='' ? 0 : parseInt(digits,10);
+  state[tab][field] = n;
+  el.value = n ? n.toLocaleString('vi-VN') : '';
+  requestAnimationFrame(()=>{ try{ el.setSelectionRange(el.value.length, el.value.length); }catch(e){} });
+  render(tab);
+}
+function onPercentInput(el, tab, field){
+  state[tab][field] = parsePercentRaw(el.value);
+  render(tab);
+}
+function onSelectInput(el, tab, field){
+  state[tab][field] = Number(el.value);
+  render(tab);
+}
+function resetTableBase(){
+  state.bid.tableBase = state.bid.bidPrice;
+  render('bid');
+}
+function setProjectDays(v){
+  state.bid.projectDays = v;
+  render('bid');
+}
+
+// ---------- fee mode (%/đ) handling for advanced bid tab ----------
+function onFeeInput(el, tab, key){
+  const mode = state[tab][key+'Mode'];
+  const val = mode==='%' ? parsePercentRaw(el.value) : parseMoney(el.value);
+  state[tab][key+'Val'] = val;
+  if(mode==='vnd'){ el.value = val ? val.toLocaleString('vi-VN') : ''; }
+  render(tab);
+}
+function setFeeMode(tab, key, mode){
+  state[tab][key+'Mode'] = mode;
+  const unitEl = document.getElementById(tab[0]+'_'+key+'Unit');
+  if(unitEl) unitEl.textContent = mode==='%' ? '%' : 'đ';
+  const pctBtn = document.getElementById(tab[0]+'_'+key+'ModePct');
+  const vndBtn = document.getElementById(tab[0]+'_'+key+'ModeVnd');
+  if(pctBtn) pctBtn.classList.toggle('active', mode==='%');
+  if(vndBtn) vndBtn.classList.toggle('active', mode==='vnd');
+  const inputEl = document.getElementById(tab[0]+'_'+key+'Val');
+  if(inputEl) inputEl.value = mode==='vnd' ? (state[tab][key+'Val']?state[tab][key+'Val'].toLocaleString('vi-VN'):'') : state[tab][key+'Val'];
+  render(tab);
+}
+function setNewCustomMode(tab, mode){
+  tempCustomMode[tab] = mode;
+  const pctBtn = document.getElementById(tab[0]+'_newCustomModePct');
+  const vndBtn = document.getElementById(tab[0]+'_newCustomModeVnd');
+  if(pctBtn) pctBtn.classList.toggle('active', mode==='%');
+  if(vndBtn) vndBtn.classList.toggle('active', mode==='vnd');
+}
+function addCustomCost(tab){
+  const nameEl = document.getElementById(tab[0]+'_newCustomName');
+  const valEl = document.getElementById(tab[0]+'_newCustomVal');
+  if(!nameEl || !valEl) return;
+  const name = nameEl.value.trim();
+  const mode = tempCustomMode[tab] || '%';
+  const val = mode==='%' ? parsePercentRaw(valEl.value) : parseMoney(valEl.value);
+  if(!name || !(val>0)) return;
+  state[tab].customCosts.push({id: customCostSeq++, name, mode, val});
+  nameEl.value=''; valEl.value='';
+  render(tab);
+}
+function removeCustomCost(tab, id){
+  state[tab].customCosts = state[tab].customCosts.filter(x=>x.id!==id);
+  render(tab);
+}
+function feeAmountFor(mode, val, price){
+  return mode==='%' ? price*(val/100) : val;
+}
+
+function addDiscount(tab){
+  const inp = document.getElementById(tab==='retail' ? 'r_newDiscount' : 'b_newDiscount');
+  if(!inp) return;
+  const v = parsePercentRaw(inp.value);
+  if(v>0 && v<100 && !state[tab].discounts.includes(v)){
+    state[tab].discounts.push(v);
+    inp.value='';
+    render(tab);
+  }
+}
+function removeDiscount(tab, v){
+  state[tab].discounts = state[tab].discounts.filter(x=>x!==v);
+  render(tab);
+}
+function addCostIncr(tab){
+  const inp = document.getElementById(tab==='retail' ? 'r_newCostIncr' : 'b_newCostIncr');
+  if(!inp) return;
+  const v = parsePercentRaw(inp.value);
+  if(v>0 && v<1000 && !state[tab].costIncr.includes(v)){
+    state[tab].costIncr.push(v);
+    inp.value='';
+    render(tab);
+  }
+}
+function removeCostIncr(tab, v){
+  state[tab].costIncr = state[tab].costIncr.filter(x=>x!==v);
+  render(tab);
+}
+
+// ---------- tabs ----------
+function switchTab(name){
+  document.getElementById('paneRetail').classList.toggle('active', name==='retail');
+  document.getElementById('paneBid').classList.toggle('active', name==='bid');
+  document.getElementById('paneSimple').classList.toggle('active', name==='simple');
+  document.getElementById('tabBtnRetail').classList.toggle('active', name==='retail');
+  document.getElementById('tabBtnBid').classList.toggle('active', name==='bid');
+  document.getElementById('tabBtnSimple').classList.toggle('active', name==='simple');
+}
+
+// ---------- calculations ----------
+function calcRetail(){
+  const st = state.retail;
+  const cost = st.cost, price = st.price;
+  // Toàn bộ lợi nhuận trong tab này quy về % trên giá net (giá vốn).
+  const marginOnCost = cost>0 ? ((price-cost)/cost)*100 : 0;
+  const profit = price-cost;
+  const markupFactor = cost>0 ? price/cost : 0;
+
+  const discountRows = [...st.discounts].sort((a,b)=>a-b).map(d=>{
+    const newPrice = price*(1-d/100);
+    const newProfit = newPrice-cost;
+    const newMarginOnCost = cost>0 ? (newProfit/cost)*100 : 0;
+    return {d,newPrice,newProfit,newMarginOnCost};
+  });
+
+  // Mục tiêu lợi nhuận trên giá net: giá bán cần thiết = giá net * (1 + mục tiêu%)
+  const requiredPrice = cost*(1+st.targetMargin/100);
+  const priceDiff = requiredPrice-price;
+  const priceDiffPct = price>0 ? (priceDiff/price)*100 : 0;
+  const isIncrease = priceDiff>=0;
+
+  const costIncrRows = [...st.costIncr].sort((a,b)=>a-b).map(c=>{
+    const newCost = cost*(1+c/100);
+    const newProfit = price-newCost;
+    const newMarginOnNet = newCost>0 ? (newProfit/newCost)*100 : 0;
+    return {c,newCost,newProfit,newMarginOnNet};
+  });
+
+  const pointsLost = st.convDiscount*markupFactor;
+  const newMarginFromDiscount = marginOnCost-pointsLost;
+  const pointsToLose = marginOnCost-st.convTargetNet;
+  const requiredDiscount = markupFactor>0 ? pointsToLose/markupFactor : 0;
+
+  return {cost,price,marginOnCost,profit,markupFactor,discountRows,requiredPrice,priceDiff,priceDiffPct,isIncrease,costIncrRows,
+    convDiscount:st.convDiscount, convTargetNet:st.convTargetNet, pointsLost,newMarginFromDiscount,pointsToLose,requiredDiscount,
+    targetMargin: st.targetMargin};
+}
+
+function calcBid(){
+  const st = state.bid;
+  const netPrice=st.netPrice, bidPrice=st.bidPrice, estimatePrice=st.estimatePrice;
+  const loanRatePct=st.loanRatePct, projectDays=st.projectDays, loanRatioPct=st.loanRatioPct;
+
+  // Phí ngân hàng: lãi vay năm x (số ngày thi công/365) x tỉ lệ vốn cần vay
+  const bankFeePct = loanRatePct*(projectDays/365)*(loanRatioPct/100);
+
+  function costForPrice(p){
+    let total = p*(bankFeePct/100);
+    total += feeAmountFor(st.shippingMode, st.shippingVal, p);
+    total += feeAmountFor(st.acceptanceMode, st.acceptanceVal, p);
+    total += feeAmountFor(st.managementMode, st.managementVal, p);
+    total += feeAmountFor(st.otherCostMode, st.otherCostVal, p);
+    st.customCosts.forEach(c=>{ total += feeAmountFor(c.mode, c.val, p); });
+    return total;
+  }
+
+  const discountVsEstimate = estimatePrice-bidPrice;
+  const discountVsEstimatePct = estimatePrice>0 ? (discountVsEstimate/estimatePrice)*100 : 0;
+  const markupVsNet = bidPrice-netPrice;
+  const markupVsNetPct = netPrice>0 ? (markupVsNet/netPrice)*100 : 0;
+
+  const bankFeeAmount = bidPrice*(bankFeePct/100);
+  const shippingAmount = feeAmountFor(st.shippingMode, st.shippingVal, bidPrice);
+  const acceptanceAmount = feeAmountFor(st.acceptanceMode, st.acceptanceVal, bidPrice);
+  const managementAmount = feeAmountFor(st.managementMode, st.managementVal, bidPrice);
+  const otherCostAmount0 = feeAmountFor(st.otherCostMode, st.otherCostVal, bidPrice);
+  const customCostRows = st.customCosts.map(c=>({...c, amount: feeAmountFor(c.mode, c.val, bidPrice)}));
+  const totalCostAmount = costForPrice(bidPrice);
+  const totalCostPct = bidPrice>0 ? (totalCostAmount/bidPrice)*100 : 0;
+
+  const finalProfit = markupVsNet-totalCostAmount;
+  const finalProfitPct = netPrice>0 ? (finalProfit/netPrice)*100 : 0;
+  const markupFactor = netPrice>0 ? bidPrice/netPrice : 0;
+
+  const targetBidPrice = estimatePrice*(1-st.targetDiscountPct/100);
+  const targetMarkupPct = netPrice>0 ? ((targetBidPrice-netPrice)/netPrice)*100 : 0;
+  const targetTotalCost = costForPrice(targetBidPrice);
+  const targetFinalProfit = targetBidPrice-netPrice-targetTotalCost;
+
+  const rows = [];
+  for(let pct=-st.rangePct; pct<=st.rangePct; pct+=st.step){
+    const p = st.tableBase*(1+pct/100);
+    const vsEstimate = estimatePrice>0 ? ((estimatePrice-p)/estimatePrice)*100 : 0;
+    const rowTotalCost = costForPrice(p);
+    const finalP = p-netPrice-rowTotalCost;
+    const finalPPct = netPrice>0 ? (finalP/netPrice)*100 : 0;
+    rows.push({pct:Math.round(pct*100)/100, p, vsEstimate, otherCost:rowTotalCost, finalProfit:finalP, finalProfitPct:finalPPct});
+  }
+
+  const costIncrRows = [...st.costIncr].sort((a,b)=>a-b).map(c=>{
+    const newNet = netPrice*(1+c/100);
+    const newTotalCost = costForPrice(bidPrice);
+    const newProfit = bidPrice-newNet-newTotalCost;
+    const newMarginOnNet = newNet>0 ? (newProfit/newNet)*100 : 0;
+    return {c,newNet,newProfit,newMarginOnNet};
+  });
+
+  const pointsLost = st.convDiscount*markupFactor;
+  const newMarginFromDiscount = markupVsNetPct-pointsLost;
+  const pointsToLose = markupVsNetPct-st.convTargetNet;
+  const requiredDiscount = markupFactor>0 ? pointsToLose/markupFactor : 0;
+
+  return {netPrice,bidPrice,estimatePrice,
+    loanRatePct,projectDays,loanRatioPct,
+    shippingMode:st.shippingMode, shippingVal:st.shippingVal,
+    acceptanceMode:st.acceptanceMode, acceptanceVal:st.acceptanceVal,
+    managementMode:st.managementMode, managementVal:st.managementVal,
+    otherCostMode:st.otherCostMode, otherCostVal:st.otherCostVal,
+    bankFeePct,bankFeeAmount,shippingAmount,acceptanceAmount,managementAmount,otherCostAmount0,
+    customCostRows,totalCostPct,totalCostAmount,
+    discountVsEstimate,discountVsEstimatePct,markupVsNet,markupVsNetPct,
+    finalProfit,finalProfitPct,markupFactor,targetDiscountPct:st.targetDiscountPct,targetBidPrice,targetMarkupPct,
+    targetFinalProfit,rows,costIncrRows,convDiscount:st.convDiscount,convTargetNet:st.convTargetNet,pointsLost,newMarginFromDiscount,
+    pointsToLose,requiredDiscount, step:st.step, rangePct:st.rangePct, tableBase:st.tableBase};
+}
+
+function calcSimple(){
+  const st = state.simple;
+  const netPrice=st.netPrice, bidPrice=st.bidPrice, discountPct=st.discountPct, otherCostPct=st.otherCostPct;
+  const finalBidPrice = bidPrice*(1-discountPct/100);
+  const discountAmount = bidPrice-finalBidPrice;
+  const otherCostAmount = finalBidPrice*(otherCostPct/100);
+  const customCostRows = st.customCosts.map(c=>({...c, amount: feeAmountFor(c.mode, c.val, finalBidPrice)}));
+  const customCostTotal = customCostRows.reduce((sum,c)=>sum+c.amount, 0);
+  const grossProfit = finalBidPrice-netPrice;
+  const finalProfit = grossProfit-otherCostAmount-customCostTotal;
+  const finalProfitPct = netPrice>0 ? (finalProfit/netPrice)*100 : 0;
+  return {netPrice,bidPrice,discountPct,otherCostPct,finalBidPrice,discountAmount,otherCostAmount,customCostRows,customCostTotal,grossProfit,finalProfit,finalProfitPct};
+}
+
+// ---------- render ----------
+function render(tab){ if(tab==='retail') renderRetail(); else if(tab==='bid') renderBid(); else renderSimple(); }
+
+function renderRetail(){
+  const c = calcRetail();
+
+  document.getElementById('r_stats').innerHTML = `
+    <div class="stat"><div class="stat-label">Lợi nhuận (trên giá net)</div><div class="stat-value amber">${fmtPct(c.marginOnCost)}%</div></div>
+    <div class="stat"><div class="stat-label">Lãi tuyệt đối</div><div class="stat-value good">${fmtInt(c.profit)} đ</div></div>
+    <div class="stat"><div class="stat-label">Hệ số giá bán/net</div><div class="stat-value">${fmtFactor(c.markupFactor)}x</div></div>
+  `;
+
+  let discRows = c.discountRows.map(r=>`
+    <tr>
+      <td style="color:var(--bad);">-${r.d}%</td>
+      <td class="r">${fmtInt(r.newPrice)}</td>
+      <td class="r">${fmtInt(r.newProfit)}</td>
+      <td class="r" style="font-weight:600;${r.newMarginOnCost<0?'color:var(--bad);':'color:var(--good);'}">${fmtPct(r.newMarginOnCost)}%</td>
+      <td class="r"><button class="rmbtn" onclick="removeDiscount('retail',${r.d})">×</button></td>
+    </tr>`).join('');
+  if(!discRows) discRows = `<tr class="empty-row"><td colspan="5">Chưa có mức giảm giá nào — thêm ở trên</td></tr>`;
+  document.getElementById('r_discountTable').innerHTML = `
+    <table>
+      <thead><tr><th>Giảm giá</th><th class="r">Giá bán mới</th><th class="r">Lãi còn lại</th><th class="r">Lợi nhuận (trên net)</th><th></th></tr></thead>
+      <tbody>${discRows}</tbody>
+    </table>`;
+
+  document.getElementById('r_convExplain').innerHTML =
+    `Hệ số giá bán/giá net hiện tại = <span class="mono amber" style="font-weight:600;">${fmtFactor(c.markupFactor)}x</span> — mỗi 1% giảm trên giá bán tương đương <span class="mono amber" style="font-weight:600;">${fmtFactor(c.markupFactor)} điểm %</span> lợi nhuận mất đi tính trên giá net.`;
+  document.getElementById('r_convForwardOut').innerHTML =
+    `→ mất <span class="num" style="color:var(--bad);">${fmtPct(c.pointsLost)} điểm %</span> LN trên net<br>LN mới trên net: <span class="num" style="${c.newMarginFromDiscount<0?'color:var(--bad);':'color:var(--good);'}">${fmtPct(c.newMarginFromDiscount)}%</span> <span style="color:var(--muted2);">(đang là ${fmtPct(c.marginOnCost)}%)</span>`;
+  document.getElementById('r_convReverseOut').innerHTML =
+    `→ được giảm tối đa <span class="num" style="color:var(--good);">${fmtPct(c.requiredDiscount)}%</span> trên giá bán`;
+
+  let costRows = c.costIncrRows.map(r=>`
+    <tr>
+      <td style="color:var(--bad);">+${r.c}%</td>
+      <td class="r">${fmtInt(r.newCost)}</td>
+      <td class="r" style="${r.newProfit<0?'color:var(--bad);':'color:var(--text2);'}">${fmtInt(r.newProfit)}</td>
+      <td class="r" style="font-weight:600;${r.newMarginOnNet<0?'color:var(--bad);':'color:var(--good);'}">${fmtPct(r.newMarginOnNet)}%</td>
+      <td class="r"><button class="rmbtn" onclick="removeCostIncr('retail',${r.c})">×</button></td>
+    </tr>`).join('');
+  if(!costRows) costRows = `<tr class="empty-row"><td colspan="5">Chưa có mức tăng chi phí nào — thêm ở trên</td></tr>`;
+  document.getElementById('r_costIncrTable').innerHTML = `
+    <table>
+      <thead><tr><th>Chi phí tăng</th><th class="r">Giá net mới</th><th class="r">Lãi còn lại</th><th class="r">Lợi nhuận (trên net)</th><th></th></tr></thead>
+      <tbody>${costRows}</tbody>
+    </table>`;
+
+  document.getElementById('r_targetCurrent').innerHTML = `hiện tại ${fmtPct(c.marginOnCost)}%`;
+  if(isFinite(c.requiredPrice)){
+    const inc = c.isIncrease;
+    document.getElementById('r_targetOut').innerHTML = `
+      <div class="box" style="margin-top:10px;background:${inc?'rgba(52,211,153,.07)':'rgba(251,113,133,.07)'};border-color:${inc?'rgba(52,211,153,.25)':'rgba(251,113,133,.25)'};">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:4px;">${inc?'Cần tăng giá bán thêm':'Cần giảm giá bán bớt'}</div>
+        <div class="mono" style="font-size:20px;font-weight:700;${inc?'color:var(--good);':'color:var(--bad);'}">
+          ${fmtInt(Math.abs(c.priceDiff))} đ
+          <span style="font-size:14px;font-weight:600;margin-left:8px;opacity:.8;">(${inc?'+':'-'}${fmtPct(Math.abs(c.priceDiffPct))}%)</span>
+        </div>
+        <div class="mono" style="font-size:12px;color:var(--muted2);margin-top:6px;">Giá bán mới: ${fmtInt(c.requiredPrice)} đ</div>
+      </div>`;
+  } else {
+    document.getElementById('r_targetOut').innerHTML = '';
+  }
+
+  // sync persistent field values (only on first paint / external changes)
+  syncVal('r_cost', fmtInt(c.cost));
+  syncVal('r_price', fmtInt(c.price));
+  syncVal('r_targetMargin', c.targetMargin);
+  syncVal('r_convDiscount', c.convDiscount);
+  syncVal('r_convTargetNet', c.convTargetNet);
+}
+
+function renderBid(){
+  const c = calcBid();
+
+  document.getElementById('b_stats').innerHTML = `
+    <div class="stat"><div class="stat-label">Giảm so với dự toán</div><div class="stat-value bad">${fmtInt(c.discountVsEstimate)} đ</div><div class="stat-sub">${fmtPct(c.discountVsEstimatePct)}%</div></div>
+    <div class="stat"><div class="stat-label">Lãi so với giá nét</div><div class="stat-value good">${fmtInt(c.markupVsNet)} đ</div><div class="stat-sub">+${fmtPct(c.markupVsNetPct)}%</div></div>
+    <div class="stat"><div class="stat-label">Tổng chi phí thực hiện</div><div class="stat-value bad">${fmtInt(c.totalCostAmount)} đ</div><div class="stat-sub">${fmtPct(c.totalCostPct)}% giá dự thầu</div></div>
+    <div class="stat"><div class="stat-label">Lợi nhuận cuối cùng</div><div class="stat-value amber">${fmtInt(c.finalProfit)} đ</div><div class="stat-sub">${fmtPct(c.finalProfitPct)}% trên giá nét</div></div>
+    <div class="stat"><div class="stat-label">Hệ số giá thầu/net</div><div class="stat-value">${fmtFactor(c.markupFactor)}x</div></div>
+  `;
+
+  document.getElementById('b_bankFeeOut').innerHTML =
+    `Phí ngân hàng = ${fmtPct(c.loanRatePct)}%/năm × (${fmtInt(c.projectDays)} ngày ÷ 365) × ${fmtPct(c.loanRatioPct)}% vốn vay = <span class="num amber" style="font-weight:600;">${fmtPct(c.bankFeePct)}%</span> giá dự thầu (${fmtInt(c.bankFeeAmount)} đ)`;
+  ['60','90','120'].forEach(d=>{
+    const el = document.getElementById('b_day'+d);
+    if(el) el.classList.toggle('active', Number(c.projectDays)===Number(d));
+  });
+
+  document.getElementById('b_costBreakdownTable').innerHTML = `
+    <table>
+      <thead><tr><th>Khoản mục</th><th class="r">%</th><th class="r">Số tiền (đ)</th></tr></thead>
+      <tbody>
+        <tr><td>Phí ngân hàng</td><td class="r">${fmtPct(c.bankFeePct)}%</td><td class="r">${fmtInt(c.bankFeeAmount)}</td></tr>
+        <tr><td>Phí vận chuyển</td><td class="r">${c.shippingMode==='%' ? fmtPct(c.shippingVal)+'%' : '—'}</td><td class="r">${fmtInt(c.shippingAmount)}</td></tr>
+        <tr><td>Phí nghiệm thu / thanh toán</td><td class="r">${c.acceptanceMode==='%' ? fmtPct(c.acceptanceVal)+'%' : '—'}</td><td class="r">${fmtInt(c.acceptanceAmount)}</td></tr>
+        <tr><td>Phí quản lý</td><td class="r">${c.managementMode==='%' ? fmtPct(c.managementVal)+'%' : '—'}</td><td class="r">${fmtInt(c.managementAmount)}</td></tr>
+        <tr><td>Chi phí khác</td><td class="r">${c.otherCostMode==='%' ? fmtPct(c.otherCostVal)+'%' : '—'}</td><td class="r">${fmtInt(c.otherCostAmount0)}</td></tr>
+        ${c.customCostRows.map(r=>`<tr><td>${r.name}</td><td class="r">${r.mode==='%' ? fmtPct(r.val)+'%' : '—'}</td><td class="r">${fmtInt(r.amount)}</td></tr>`).join('')}
+        <tr style="background:var(--amber-dim);font-weight:700;"><td>Tổng</td><td class="r amber">${fmtPct(c.totalCostPct)}%</td><td class="r amber">${fmtInt(c.totalCostAmount)}</td></tr>
+      </tbody>
+    </table>`;
+
+  let customRows = c.customCostRows.map(r=>`
+    <tr>
+      <td>${r.name}</td>
+      <td class="r">${r.mode==='%' ? fmtPct(r.val)+'%' : fmtInt(r.val)+' đ'}</td>
+      <td class="r">${fmtInt(r.amount)}</td>
+      <td class="r"><button class="rmbtn" onclick="removeCustomCost('bid',${r.id})">×</button></td>
+    </tr>`).join('');
+  if(!customRows) customRows = `<tr class="empty-row"><td colspan="4">Chưa có chi phí tùy chọn nào</td></tr>`;
+  document.getElementById('b_customCostTable').innerHTML = `
+    <table>
+      <thead><tr><th>Tên</th><th class="r">Giá trị</th><th class="r">Số tiền (đ)</th><th></th></tr></thead>
+      <tbody>${customRows}</tbody>
+    </table>`;
+
+  document.getElementById('b_convExplain').innerHTML =
+    `Hệ số giá dự thầu/giá net hiện tại = <span class="mono amber" style="font-weight:600;">${fmtFactor(c.markupFactor)}x</span> — mỗi 1% giảm trên giá dự thầu tương đương <span class="mono amber" style="font-weight:600;">${fmtFactor(c.markupFactor)} điểm %</span> lợi nhuận mất đi tính trên giá net.`;
+  document.getElementById('b_convForwardOut').innerHTML =
+    `→ mất <span class="num" style="color:var(--bad);">${fmtPct(c.pointsLost)} điểm %</span> LN trên net<br>LN mới trên net: <span class="num" style="${c.newMarginFromDiscount<0?'color:var(--bad);':'color:var(--good);'}">${fmtPct(c.newMarginFromDiscount)}%</span> <span style="color:var(--muted2);">(đang là ${fmtPct(c.markupVsNetPct)}%)</span>`;
+  document.getElementById('b_convReverseOut').innerHTML =
+    `→ được giảm tối đa <span class="num" style="color:var(--good);">${fmtPct(c.requiredDiscount)}%</span> trên giá dự thầu`;
+
+  document.getElementById('b_targetNote').innerHTML = `trên giá dự toán ${fmtInt(c.estimatePrice)} đ`;
+  document.getElementById('b_targetBox').innerHTML = `
+    <div class="box" style="margin-top:10px;background:rgba(245,158,11,.07);border-color:rgba(245,158,11,.25);">
+      <div class="row"><span class="k">Giá thầu cần đặt</span><span class="v amber">${fmtInt(c.targetBidPrice)} đ</span></div>
+      <div class="row"><span class="k">Tương đương % trên giá nét</span><span class="v small good">+${fmtPct(c.targetMarkupPct)}%</span></div>
+      <div class="row"><span class="k">Lợi nhuận cuối (sau tổng chi phí)</span><span class="v small" style="color:var(--text);">${fmtInt(c.targetFinalProfit)} đ</span></div>
+    </div>`;
+
+  let costRows = c.costIncrRows.map(r=>`
+    <tr>
+      <td style="color:var(--bad);">+${r.c}%</td>
+      <td class="r">${fmtInt(r.newNet)}</td>
+      <td class="r" style="${r.newProfit<0?'color:var(--bad);':'color:var(--text2);'}">${fmtInt(r.newProfit)}</td>
+      <td class="r" style="font-weight:600;${r.newMarginOnNet<0?'color:var(--bad);':'color:var(--good);'}">${fmtPct(r.newMarginOnNet)}%</td>
+      <td class="r"><button class="rmbtn" onclick="removeCostIncr('bid',${r.c})">×</button></td>
+    </tr>`).join('');
+  if(!costRows) costRows = `<tr class="empty-row"><td colspan="5">Chưa có mức tăng chi phí nào — thêm ở trên</td></tr>`;
+  document.getElementById('b_costIncrTable').innerHTML = `
+    <table>
+      <thead><tr><th>Chi phí tăng</th><th class="r">Giá net mới</th><th class="r">Lãi thực còn lại</th><th class="r">LN / giá net</th><th></th></tr></thead>
+      <tbody>${costRows}</tbody>
+    </table>`;
+
+  document.getElementById('b_resetBase').textContent = `Đặt gốc bảng = giá dự thầu dự kiến (${fmtInt(c.bidPrice)} đ)`;
+
+  let rangeRows = c.rows.map(r=>{
+    const isBase = Math.abs(r.pct) < 1e-9;
+    const pctColor = r.pct>0 ? 'var(--good)' : (r.pct<0 ? 'var(--bad)' : 'var(--amber)');
+    return `
+    <tr style="${isBase?'background:rgba(245,158,11,.08);':''}">
+      <td style="color:${pctColor};${isBase?'font-weight:600;':''}">${r.pct>0?'+':''}${r.pct}%</td>
+      <td class="r" style="color:var(--text);">${fmtInt(r.p)}</td>
+      <td class="r" style="${r.vsEstimate<0?'color:var(--bad);':'color:var(--text2);'}">${fmtPct(r.vsEstimate)}%</td>
+      <td class="r" style="color:var(--muted);">${fmtInt(r.otherCost)}</td>
+      <td class="r" style="font-weight:600;${r.finalProfit<0?'color:var(--bad);':'color:var(--text);'}">${fmtInt(r.finalProfit)}</td>
+      <td class="r" style="font-weight:600;${r.finalProfitPct<0?'color:var(--bad);':'color:var(--good);'}">${fmtPct(r.finalProfitPct)}%</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('b_rangeTable').innerHTML = `
+    <table>
+      <thead><tr><th>%</th><th class="r">Giá dự thầu</th><th class="r">Giảm so DT</th><th class="r">CP khác</th><th class="r">LN thực</th><th class="r">LN thực %</th></tr></thead>
+      <tbody>${rangeRows}</tbody>
+    </table>`;
+
+  syncVal('b_netPrice', fmtInt(c.netPrice));
+  syncVal('b_bidPrice', fmtInt(c.bidPrice));
+  syncVal('b_estimatePrice', fmtInt(c.estimatePrice));
+  syncVal('b_loanRatePct', c.loanRatePct);
+  syncVal('b_projectDays', c.projectDays);
+  syncVal('b_loanRatioPct', c.loanRatioPct);
+  syncVal('b_shippingVal', c.shippingMode==='vnd' ? fmtInt(c.shippingVal) : c.shippingVal);
+  syncVal('b_acceptanceVal', c.acceptanceMode==='vnd' ? fmtInt(c.acceptanceVal) : c.acceptanceVal);
+  syncVal('b_managementVal', c.managementMode==='vnd' ? fmtInt(c.managementVal) : c.managementVal);
+  syncVal('b_otherCostVal', c.otherCostMode==='vnd' ? fmtInt(c.otherCostVal) : c.otherCostVal);
+  syncVal('b_targetDiscountPct', c.targetDiscountPct);
+  syncVal('b_convDiscount', c.convDiscount);
+  syncVal('b_convTargetNet', c.convTargetNet);
+  syncSelect('b_rangePct', c.rangePct);
+  syncSelect('b_step', c.step);
+}
+
+function renderSimple(){
+  const c = calcSimple();
+  document.getElementById('s_stats').innerHTML = `
+    <div class="stat"><div class="stat-label">Giá bán sau giảm giá</div><div class="stat-value">${fmtInt(c.finalBidPrice)} đ</div><div class="stat-sub">giảm ${fmtInt(c.discountAmount)} đ</div></div>
+    <div class="stat"><div class="stat-label">Tổng chi phí</div><div class="stat-value bad">${fmtInt(c.otherCostAmount+c.customCostTotal)} đ</div></div>
+    <div class="stat"><div class="stat-label">Lợi nhuận cuối cùng</div><div class="stat-value amber">${fmtInt(c.finalProfit)} đ</div><div class="stat-sub">${fmtPct(c.finalProfitPct)}% trên giá net</div></div>
+  `;
+
+  let customRows = c.customCostRows.map(r=>`
+    <tr>
+      <td>${r.name}</td>
+      <td class="r">${r.mode==='%' ? fmtPct(r.val)+'%' : fmtInt(r.val)+' đ'}</td>
+      <td class="r">${fmtInt(r.amount)}</td>
+      <td class="r"><button class="rmbtn" onclick="removeCustomCost('simple',${r.id})">×</button></td>
+    </tr>`).join('');
+  if(!customRows) customRows = `<tr class="empty-row"><td colspan="4">Chưa có chi phí tùy chọn nào</td></tr>`;
+  document.getElementById('s_customCostTable').innerHTML = `
+    <table>
+      <thead><tr><th>Tên</th><th class="r">Giá trị</th><th class="r">Số tiền (đ)</th><th></th></tr></thead>
+      <tbody>${customRows}</tbody>
+    </table>`;
+
+  document.getElementById('s_detailBox').innerHTML = `
+    <div class="box" style="background:var(--amber-dim);border-color:var(--amber-bd);">
+      <div class="row"><span class="k">Giá bán ban đầu</span><span class="v small" style="color:var(--text);">${fmtInt(c.bidPrice)} đ</span></div>
+      <div class="row"><span class="k">Giảm giá ${fmtPct(c.discountPct)}%</span><span class="v small" style="color:var(--bad);">-${fmtInt(c.discountAmount)} đ</span></div>
+      <div class="row"><span class="k">Giá bán sau giảm giá</span><span class="v small" style="color:var(--text);">${fmtInt(c.finalBidPrice)} đ</span></div>
+      <div class="row"><span class="k">Lãi trước chi phí</span><span class="v small" style="color:var(--text);">${fmtInt(c.grossProfit)} đ</span></div>
+      <div class="row"><span class="k">Chi phí khác ${fmtPct(c.otherCostPct)}%</span><span class="v small" style="color:var(--bad);">-${fmtInt(c.otherCostAmount)} đ</span></div>
+      <div class="row"><span class="k">Chi phí tùy chọn</span><span class="v small" style="color:var(--bad);">-${fmtInt(c.customCostTotal)} đ</span></div>
+      <div class="row" style="border-top:1px solid var(--row-border);padding-top:8px;margin-top:2px;"><span class="k" style="font-weight:600;">Lợi nhuận cuối cùng (trên giá net)</span><span class="v" style="${c.finalProfitPct<0?'color:var(--bad);':'color:var(--amber);'}">${fmtPct(c.finalProfitPct)}%</span></div>
+    </div>`;
+  syncVal('s_netPrice', fmtInt(c.netPrice));
+  syncVal('s_bidPrice', fmtInt(c.bidPrice));
+  syncVal('s_discountPct', c.discountPct);
+  syncVal('s_otherCostPct', c.otherCostPct);
+}
+
+function syncVal(id, val){
+  const el = document.getElementById(id);
+  if(el && document.activeElement !== el) el.value = val;
+}
+function syncSelect(id, val){
+  const el = document.getElementById(id);
+  if(el) el.value = String(val);
+}
+
+// ---------- Excel export ----------
+function exportExcel(){
+  const r = calcRetail();
+  const b = calcBid();
+  const s = calcSimple();
+  const wb = XLSX.utils.book_new();
+
+  const retailAOA = [
+    ["LỢI NHUẬN BÁN LẺ (quy về giá net)"],[],
+    ["Giá đầu vào / giá net (đ)", r.cost],
+    ["Giá bán (đ)", r.price],
+    ["Hệ số giá bán / giá net", Number(r.markupFactor.toFixed(3))],
+    ["Lợi nhuận trên giá net (%)", Number(r.marginOnCost.toFixed(2))],
+    ["Lãi tuyệt đối (đ)", Math.round(r.profit)],
+    [],
+    ["BẢNG TÁC ĐỘNG GIẢM GIÁ (trên giá bán)"],
+    ["Giảm giá (%)","Giá bán mới (đ)","Lãi còn lại (đ)","Lợi nhuận trên giá net (%)"],
+    ...r.discountRows.map(x=>[x.d, Math.round(x.newPrice), Math.round(x.newProfit), Number(x.newMarginOnCost.toFixed(2))]),
+    [],
+    ["BẢNG TÁC ĐỘNG KHI CHI PHÍ (GIÁ NET) TĂNG — giữ nguyên giá bán"],
+    ["Chi phí tăng (%)","Giá net mới (đ)","Lãi còn lại (đ)","Lợi nhuận trên giá net mới (%)"],
+    ...r.costIncrRows.map(x=>[x.c, Math.round(x.newCost), Math.round(x.newProfit), Number(x.newMarginOnNet.toFixed(2))]),
+    [],
+    ["MỤC TIÊU LỢI NHUẬN (trên giá net)"],
+    ["Mục tiêu lợi nhuận (%)", r.targetMargin],
+    ["Giá bán cần thiết (đ)", Math.round(r.requiredPrice)],
+    ["Chênh lệch giá bán (đ)", Math.round(r.priceDiff)],
+    ["Chênh lệch (%)", Number(r.priceDiffPct.toFixed(2))]
+  ];
+  const wsR = XLSX.utils.aoa_to_sheet(retailAOA);
+  wsR['!cols'] = [{wch:34},{wch:18},{wch:18},{wch:20}];
+  XLSX.utils.book_append_sheet(wb, wsR, "Ban le");
+
+  const feeLine = (label, mode, val, amount) => [label, mode==='%' ? val : "—", mode==='vnd' ? Math.round(val) : "—", Math.round(amount)];
+  const bidAOA = [
+    ["ĐẤU THẦU NÂNG CAO"],[],
+    ["Giá nét / giá gốc (đ)", b.netPrice],
+    ["Giá dự thầu dự kiến (đ)", b.bidPrice],
+    ["Giá dự toán gói thầu (đ)", b.estimatePrice],
+    ["Hệ số giá dự thầu / giá net", Number(b.markupFactor.toFixed(3))],
+    [],
+    ["CHI PHÍ THỰC HIỆN DỰ ÁN"],
+    ["Lãi vay (%/năm)", b.loanRatePct],
+    ["Số ngày thi công", b.projectDays],
+    ["% vốn cần vay", b.loanRatioPct],
+    ["Khoản mục","% (nếu có)","Số tiền cố định (nếu có)","Số tiền quy đổi (đ)"],
+    ["Phí ngân hàng", Number(b.bankFeePct.toFixed(3)), "—", Math.round(b.bankFeeAmount)],
+    feeLine("Phí vận chuyển", b.shippingMode, b.shippingVal, b.shippingAmount),
+    feeLine("Phí nghiệm thu / thanh toán", b.acceptanceMode, b.acceptanceVal, b.acceptanceAmount),
+    feeLine("Phí quản lý", b.managementMode, b.managementVal, b.managementAmount),
+    feeLine("Chi phí khác", b.otherCostMode, b.otherCostVal, b.otherCostAmount0),
+    ...b.customCostRows.map(x=>feeLine(x.name, x.mode, x.val, x.amount)),
+    ["TỔNG CHI PHÍ (%)", Number(b.totalCostPct.toFixed(3)), "", ""],
+    ["TỔNG CHI PHÍ (đ)", "", "", Math.round(b.totalCostAmount)],
+    [],
+    ["Giảm so với dự toán (đ)", Math.round(b.discountVsEstimate)],
+    ["Giảm so với dự toán (%)", Number(b.discountVsEstimatePct.toFixed(2))],
+    ["Lãi so với giá nét (đ)", Math.round(b.markupVsNet)],
+    ["Lãi so với giá nét (%)", Number(b.markupVsNetPct.toFixed(2))],
+    ["Lợi nhuận cuối cùng (đ)", Math.round(b.finalProfit)],
+    ["Lợi nhuận cuối cùng (%) trên giá nét", Number(b.finalProfitPct.toFixed(2))],
+    [],
+    ["TÍNH NGƯỢC THEO % GIẢM GIÁ MỤC TIÊU"],
+    ["Giảm giá mục tiêu trên giá dự toán (%)", b.targetDiscountPct],
+    ["Giá thầu cần đặt (đ)", Math.round(b.targetBidPrice)],
+    ["Tương đương % trên giá nét", Number(b.targetMarkupPct.toFixed(2))],
+    ["Lợi nhuận cuối cùng sau tổng chi phí (đ)", Math.round(b.targetFinalProfit)],
+    [],
+    ["BẢNG TÁC ĐỘNG KHI CHI PHÍ (GIÁ NET) TĂNG — giữ nguyên giá dự thầu"],
+    ["Chi phí tăng (%)","Giá net mới (đ)","Lãi thực còn lại (đ)","LN trên giá net mới (%)"],
+    ...b.costIncrRows.map(x=>[x.c, Math.round(x.newNet), Math.round(x.newProfit), Number(x.newMarginOnNet.toFixed(2))]),
+    [],
+    ["BẢNG BIÊN ĐỘ GIÁ"],
+    ["Biến động (%)","Giá dự thầu (đ)","Giảm so với DT (%)","Tổng chi phí (đ)","Lợi nhuận thực (đ)","Lợi nhuận thực (%)"],
+    ...b.rows.map(x=>[x.pct, Math.round(x.p), Number(x.vsEstimate.toFixed(2)), Math.round(x.otherCost), Math.round(x.finalProfit), Number(x.finalProfitPct.toFixed(2))])
+  ];
+  const wsB = XLSX.utils.aoa_to_sheet(bidAOA);
+  wsB['!cols'] = [{wch:36},{wch:16},{wch:18},{wch:18},{wch:16},{wch:16}];
+  XLSX.utils.book_append_sheet(wb, wsB, "Thau nang cao");
+
+  const simpleAOA = [
+    ["THẦU ĐƠN GIẢN"],[],
+    ["Giá net (đ)", s.netPrice],
+    ["Giá bán / giá dự thầu (đ)", s.bidPrice],
+    ["Giảm giá (%)", s.discountPct],
+    ["Chi phí khác (%)", s.otherCostPct],
+    [],
+    ["Giá bán sau giảm giá (đ)", Math.round(s.finalBidPrice)],
+    ["Số tiền giảm giá (đ)", Math.round(s.discountAmount)],
+    ["Lãi trước chi phí (đ)", Math.round(s.grossProfit)],
+    ["Chi phí khác (đ)", Math.round(s.otherCostAmount)],
+    [],
+    ["CHI PHÍ TÙY CHỌN"],
+    ["Tên", "Giá trị", "Số tiền (đ)"],
+    ...s.customCostRows.map(x=>[x.name, x.mode==='%' ? x.val+'%' : fmtInt(x.val)+' đ', Math.round(x.amount)]),
+    ["Tổng chi phí tùy chọn (đ)", "", Math.round(s.customCostTotal)],
+    [],
+    ["Lợi nhuận cuối cùng (đ)", Math.round(s.finalProfit)],
+    ["Lợi nhuận cuối cùng (%) trên giá net", Number(s.finalProfitPct.toFixed(2))]
+  ];
+  const wsS = XLSX.utils.aoa_to_sheet(simpleAOA);
+  wsS['!cols'] = [{wch:32},{wch:18},{wch:18}];
+  XLSX.utils.book_append_sheet(wb, wsS, "Thau don gian");
+
+  XLSX.writeFile(wb, "tinh-gia-epc.xlsx");
+}
+
+// ---------- init ----------
+renderRetail();
+renderBid();
+renderSimple();
+</script>
+</body>
+</html>
