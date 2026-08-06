@@ -3,7 +3,6 @@
   <a href="index.html" style="display: inline-flex; align-items: center; gap: 6px; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; color: #1B3A2B; text-decoration: none; background: rgba(27,58,43,0.08); padding: 6px 12px; border-radius: 4px; border: 1px solid rgba(27,58,43,0.2);">
     ← Quay lại trang chủ
   </a>
-</div>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -30,6 +29,8 @@
     --teal-soft:#2F6F6222;
     --rust:#B5432F;
     --rust-soft:#B5432F22;
+    --milestone:#1F8A3B;
+    --milestone-soft:#1F8A3B24;
   }
   *{box-sizing:border-box;}
   body{margin:0;background:var(--paper);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}
@@ -114,6 +115,21 @@
 
   .footnote{margin-top:32px;padding-top:18px;border-top:1px solid var(--line);font-size:12px;line-height:1.7;color:var(--mute);}
   .footnote b{color:var(--ink);}
+
+  .table-wrap{overflow-x:auto;}
+  .group-head{font-weight:600;white-space:nowrap;}
+  tfoot td{border-top:2px solid var(--line);background:var(--paper-2);}
+  .cell-x2{background:var(--milestone-soft)!important;color:var(--milestone)!important;position:relative;}
+  .cell-x2::after{content:"×" attr(data-mult);position:absolute;top:2px;right:4px;font-size:9px;font-weight:700;color:var(--milestone);}
+  .milestone-legend{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--mute);}
+  .milestone-swatch{width:12px;height:12px;border-radius:3px;background:var(--milestone-soft);border:1px solid var(--milestone);display:inline-block;}
+  .budget-panel{background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:20px;}
+  .budget-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+  .budget-input{width:220px;}
+
+  .sync-panel{margin-top:14px;padding:14px;border:1px solid var(--line);border-radius:8px;background:var(--paper-2);}
+  .sync-row{display:flex;gap:10px;align-items:center;margin-top:8px;flex-wrap:wrap;}
+  .sync-textarea{width:100%;min-height:80px;font-family:"SFMono-Regular",Consolas,monospace;font-size:11px;padding:8px;border:1px solid var(--line);border-radius:6px;resize:vertical;background:#fff;color:var(--ink);margin-top:6px;}
 </style>
 </head>
 <body>
@@ -146,6 +162,24 @@ function parseNumber(str){
   const digits = String(str).replace(/[^\d-]/g,"");
   if(digits===""||digits==="-") return 0;
   return parseInt(digits,10);
+}
+
+// Trả về map { year: bội số (2,4,8...) } — năm nào số dư lần đầu đạt mốc gấp đôi
+// so với số dư năm 1 (hoặc gấp đôi mốc trước đó) thì được đánh dấu.
+function computeDoublingMilestones(annualRows, getNav, getYear){
+  const map = {};
+  if(!annualRows || !annualRows.length) return map;
+  const baseline = getNav(annualRows[0]);
+  if(!(baseline>0)) return map;
+  let mult = 2;
+  annualRows.forEach(row=>{
+    const nav = getNav(row);
+    while(nav >= baseline*mult){
+      map[getYear(row)] = mult;
+      mult *= 2;
+    }
+  });
+  return map;
 }
 
 function pvAnnuity(amountPerYear, years, ratePct){
@@ -268,6 +302,15 @@ function loadFunds(){
     }
   }catch(e){}
   return seedFunds;
+}
+
+const CAP_STORAGE_KEY = "qgd_cap_v1";
+function loadCap(){
+  try{
+    const raw = localStorage.getItem(CAP_STORAGE_KEY);
+    if(raw!==null){ const n = JSON.parse(raw); if(typeof n==="number" && isFinite(n)) return n; }
+  }catch(e){}
+  return 0;
 }
 
 let idCounter = 100;
@@ -411,6 +454,68 @@ function FundCard({fund,index,onChange,onRemove,result}){
   );
 }
 
+function CashFlowChart({funds,results}){
+  const canvasRef = useRef(null);
+  const chartRef = useRef(null);
+
+  const chartData = useMemo(()=>{
+    const maxYears = Math.max(1, ...funds.map(f=>results[f.id].totalYears));
+    let cumulativeInvested = 0;
+    const data=[];
+    for(let y=1;y<=maxYears;y++){
+      let contribution=0, withdrawal=0, navEnd=0;
+      funds.forEach(f=>{
+        const result = results[f.id];
+        const row = result.annualRows.find(r=>r.year===y);
+        if(row){ contribution+=row.contribution; withdrawal+=row.withdrawal; navEnd+=row.navEnd; }
+        else{ navEnd+=result.finalNav; }
+      });
+      cumulativeInvested += contribution;
+      data.push({calYear:CURRENT_YEAR+y-1, contribution, withdrawal, navEnd, cumulativeInvested});
+    }
+    return data;
+  },[funds,results]);
+
+  useEffect(()=>{
+    if(!canvasRef.current) return;
+    if(chartRef.current) chartRef.current.destroy();
+    const ctx = canvasRef.current.getContext("2d");
+    chartRef.current = new Chart(ctx,{
+      type:"bar",
+      data:{
+        labels: chartData.map(r=>r.calYear),
+        datasets:[
+          {type:"bar", label:"Góp vào trong năm", data:chartData.map(r=>r.contribution), backgroundColor:"#2F6F62CC", borderRadius:3, order:2},
+          {type:"bar", label:"Rút ra trong năm", data:chartData.map(r=>-r.withdrawal), backgroundColor:"#B5432FCC", borderRadius:3, order:2},
+          {type:"line", label:"Tổng vốn đã góp (lũy kế)", data:chartData.map(r=>r.cumulativeInvested), borderColor:"#A9762E", borderDash:[5,3], borderWidth:2, pointRadius:0, tension:0.25, fill:false, order:1},
+          {type:"line", label:"Tiền còn lại cuối năm", data:chartData.map(r=>r.navEnd), borderColor:"#20293A", borderWidth:2.5, pointRadius:0, tension:0.25, fill:false, order:0},
+        ],
+      },
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        interaction:{mode:"index",intersect:false},
+        scales:{
+          y:{ticks:{callback:(v)=>fmtShort(v)}, grid:{color:"#E3D9C0"}},
+          x:{grid:{display:false}},
+        },
+        plugins:{
+          legend:{position:"bottom", labels:{boxWidth:10, font:{size:11}}},
+          tooltip:{callbacks:{label:(c)=>c.dataset.label+": "+fmt(Math.abs(c.parsed.y))}},
+        },
+      },
+    });
+    return ()=>{ if(chartRef.current) chartRef.current.destroy(); };
+  },[chartData]);
+
+  return (
+    <div className="panel" style={{marginBottom:20}}>
+      <div className="chart-note">Dòng tiền tổng hợp mọi quỹ theo năm — cột xanh là tiền góp vào, cột đỏ là tiền rút ra (chúc xuống cho dễ thấy); đường nét đứt vàng là tổng vốn đã góp lũy kế, đường liền màu đen là số tiền còn lại thực tế cuối mỗi năm.</div>
+      <div className="chart-wrap"><canvas ref={canvasRef}></canvas></div>
+    </div>
+  );
+}
+
 function ChartPanel({funds,results}){
   const canvasRef = useRef(null);
   const chartRef = useRef(null);
@@ -481,6 +586,134 @@ function ChartPanel({funds,results}){
   );
 }
 
+function YearlySummaryTable({funds,results}){
+  const maxYears = Math.max(1, ...funds.map(f=>results[f.id].totalYears));
+
+  const rows = useMemo(()=>{
+    const list=[];
+    let cumContribution = 0;
+    for(let y=1;y<=maxYears;y++){
+      const calYear = CURRENT_YEAR+y-1;
+      const perFund = funds.map(f=>{
+        const result = results[f.id];
+        const row = result.annualRows.find(r=>r.year===y);
+        if(row){
+          const monthly = row.phase!=="Rút" ? result.monthlyRequired : 0;
+          return {contribution:row.contribution, interest:row.interest, withdrawal:row.withdrawal, navEnd:row.navEnd, monthly};
+        }
+        // quỹ đã kết thúc vòng đời trước năm này — số dư giữ nguyên ở mức cuối cùng
+        return {contribution:0, interest:0, withdrawal:0, navEnd:result.finalNav, monthly:0};
+      });
+      const totals = perFund.reduce((acc,p)=>({
+        contribution:acc.contribution+p.contribution,
+        interest:acc.interest+p.interest,
+        withdrawal:acc.withdrawal+p.withdrawal,
+        navEnd:acc.navEnd+p.navEnd,
+        monthly:acc.monthly+p.monthly,
+      }),{contribution:0,interest:0,withdrawal:0,navEnd:0,monthly:0});
+      cumContribution += totals.contribution;
+      totals.cumContribution = cumContribution;
+      list.push({calYear,y,perFund,totals});
+    }
+    return list;
+  },[funds,results,maxYears]);
+
+  const grand = useMemo(()=>rows.reduce((acc,r)=>({
+    contribution:acc.contribution+r.totals.contribution,
+    interest:acc.interest+r.totals.interest,
+    withdrawal:acc.withdrawal+r.totals.withdrawal,
+  }),{contribution:0,interest:0,withdrawal:0}),[rows]);
+
+  const fundTotals = useMemo(()=>funds.map(f=>{
+    const result = results[f.id];
+    return {
+      contribution: result.annualRows.reduce((s,r)=>s+r.contribution,0),
+      interest: result.annualRows.reduce((s,r)=>s+r.interest,0),
+      withdrawal: result.annualRows.reduce((s,r)=>s+r.withdrawal,0),
+    };
+  }),[funds,results]);
+
+  const milestoneMap = useMemo(()=>computeDoublingMilestones(rows, r=>r.totals.navEnd, r=>r.y),[rows]);
+
+  return (
+    <div className="panel">
+      <div className="chart-note">Tổng hợp dòng tiền tất cả các quỹ theo từng năm: mỗi quỹ góp bao nhiêu — sinh lãi bao nhiêu — rút ra bao nhiêu. Hai cột ngoài cùng bên phải (nhóm TỔNG) cho biết tổng cần góp mỗi tháng và tổng số dư mọi quỹ cộng lại ở cuối mỗi năm, để cân đối dòng tiền hàng tháng.
+        {Object.keys(milestoneMap).length>0 && (
+          <span className="milestone-legend" style={{marginLeft:12}}><span className="milestone-swatch"></span>Ô tô xanh = tổng số dư đã nhân đôi so với mốc trước đó</span>
+        )}
+      </div>
+      <div className="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th rowSpan="2" style={{position:"sticky",left:0,background:"var(--paper-2)",zIndex:2}}>Năm</th>
+              {funds.map((f,i)=>(
+                <th key={f.id} colSpan="3" className="group-head" style={{borderLeft:"2px solid var(--line)"}}>
+                  <span className="dot" style={{background:FUND_COLORS[i%FUND_COLORS.length],display:"inline-block",width:8,height:8,borderRadius:"50%",marginRight:6}}></span>{f.name}
+                </th>
+              ))}
+              <th colSpan="6" className="group-head" style={{borderLeft:"2px solid var(--gold)",color:"var(--gold)"}}>TỔNG CỘNG</th>
+            </tr>
+            <tr>
+              {funds.map(f=>(
+                <React.Fragment key={f.id+"_sub"}>
+                  <th className="r" style={{borderLeft:"2px solid var(--line)"}}>Góp</th>
+                  <th className="r">Lãi</th>
+                  <th className="r">Rút</th>
+                </React.Fragment>
+              ))}
+              <th className="r" style={{borderLeft:"2px solid var(--gold)"}}>Góp</th>
+              <th className="r">Lãi</th>
+              <th className="r">Rút</th>
+              <th className="r">Góp lũy kế</th>
+              <th className="r">Góp/tháng</th>
+              <th className="r">Số dư cuối năm</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map(r=>(
+              <tr key={r.calYear}>
+                <td className="mono" style={{position:"sticky",left:0,background:"#fff",fontWeight:600}}>{r.calYear} <span style={{color:"var(--mute)",fontWeight:400}}>(N{r.y})</span></td>
+                {r.perFund.map((p,i)=>(
+                  <React.Fragment key={funds[i].id+"_"+r.calYear}>
+                    <td className="r mono" style={{borderLeft:"2px solid var(--line)",color:p.contribution?"var(--teal)":"var(--mute)"}}>{p.contribution?fmt(p.contribution):"—"}</td>
+                    <td className="r mono" style={{color:"var(--mute)"}}>{p.interest?fmt(p.interest):"—"}</td>
+                    <td className="r mono" style={{color:p.withdrawal?"var(--rust)":"var(--mute)"}}>{p.withdrawal?"-"+fmt(p.withdrawal):"—"}</td>
+                  </React.Fragment>
+                ))}
+                <td className="r mono" style={{borderLeft:"2px solid var(--gold)",color:"var(--teal)",fontWeight:700}}>{fmt(r.totals.contribution)}</td>
+                <td className="r mono" style={{color:"var(--mute)"}}>{fmt(r.totals.interest)}</td>
+                <td className="r mono" style={{color:"var(--rust)"}}>{r.totals.withdrawal?"-"+fmt(r.totals.withdrawal):"—"}</td>
+                <td className="r mono" style={{color:"var(--gold)"}}>{fmt(r.totals.cumContribution)}</td>
+                <td className="r mono" style={{fontWeight:700,color:"var(--gold)"}}>{fmt(r.totals.monthly)}</td>
+                <td className={"r mono"+(milestoneMap[r.y]?" cell-x2":"")} data-mult={milestoneMap[r.y]||undefined} style={{fontWeight:700,color: milestoneMap[r.y] ? undefined : (r.totals.navEnd<0?"var(--rust)":"var(--ink)")}}>{fmt(r.totals.navEnd)}</td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr>
+              <td className="mono" style={{position:"sticky",left:0,background:"var(--paper-2)",fontWeight:700}}>Tổng cả giai đoạn</td>
+              {fundTotals.map((ft,i)=>(
+                <React.Fragment key={funds[i].id+"_sum"}>
+                  <td className="r mono" style={{borderLeft:"2px solid var(--line)",fontWeight:700,color:"var(--teal)"}}>{fmt(ft.contribution)}</td>
+                  <td className="r mono" style={{fontWeight:700,color:"var(--mute)"}}>{fmt(ft.interest)}</td>
+                  <td className="r mono" style={{fontWeight:700,color:"var(--rust)"}}>{ft.withdrawal?"-"+fmt(ft.withdrawal):"—"}</td>
+                </React.Fragment>
+              ))}
+              <td className="r mono" style={{borderLeft:"2px solid var(--gold)",fontWeight:700,color:"var(--teal)"}}>{fmt(grand.contribution)}</td>
+              <td className="r mono" style={{fontWeight:700,color:"var(--mute)"}}>{fmt(grand.interest)}</td>
+              <td className="r mono" style={{fontWeight:700,color:"var(--rust)"}}>{grand.withdrawal?"-"+fmt(grand.withdrawal):"—"}</td>
+              <td className="r mono" style={{fontWeight:700,color:"var(--gold)"}}>{fmt(grand.contribution)}</td>
+              <td className="r"></td>
+              <td className="r"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 function exportExcel(funds, results){
   const wb = XLSX.utils.book_new();
   const summary = funds.map(f=>({
@@ -494,6 +727,34 @@ function exportExcel(funds, results){
     "Số năm rút": f.withdrawYears,
   }));
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(summary), "Tổng quan");
+
+  const maxYears = Math.max(1, ...funds.map(f=>results[f.id].totalYears));
+  const yearlyRows=[];
+  for(let y=1;y<=maxYears;y++){
+    const calYear = CURRENT_YEAR+y-1;
+    const rowOut = {"Năm": calYear};
+    let totC=0, totI=0, totW=0, totM=0, totNav=0;
+    funds.forEach(f=>{
+      const result = results[f.id];
+      const row = result.annualRows.find(r=>r.year===y);
+      const c = row ? row.contribution : 0;
+      const i = row ? row.interest : 0;
+      const w = row ? row.withdrawal : 0;
+      const nav = row ? row.navEnd : result.finalNav;
+      const m = row && row.phase!=="Rút" ? result.monthlyRequired : 0;
+      rowOut[f.name+" - Góp (đ)"] = Math.round(c);
+      rowOut[f.name+" - Lãi (đ)"] = Math.round(i);
+      rowOut[f.name+" - Rút (đ)"] = Math.round(w);
+      totC+=c; totI+=i; totW+=w; totM+=m; totNav+=nav;
+    });
+    rowOut["TỔNG - Góp (đ)"] = Math.round(totC);
+    rowOut["TỔNG - Lãi (đ)"] = Math.round(totI);
+    rowOut["TỔNG - Rút (đ)"] = Math.round(totW);
+    rowOut["TỔNG - Góp/tháng (đ)"] = Math.round(totM);
+    rowOut["TỔNG - Số dư cuối năm (đ)"] = Math.round(totNav);
+    yearlyRows.push(rowOut);
+  }
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(yearlyRows), "Tổng hợp theo năm");
 
   funds.forEach(f=>{
     const rows = results[f.id].annualRows.map(r=>({
@@ -515,10 +776,19 @@ function App(){
   const [funds, setFunds] = useState(loadFunds);
   const [tab, setTab] = useState("overview");
   const [detailFundId, setDetailFundId] = useState(()=>loadFunds()[0].id);
+  const [monthlyCap, setMonthlyCap] = useState(loadCap);
+  const [syncOpen, setSyncOpen] = useState(false);
+  const [codeText, setCodeText] = useState("");
+  const [copyStatus, setCopyStatus] = useState("");
+  const [importText, setImportText] = useState("");
 
   useEffect(()=>{
     try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(funds)); }catch(e){}
   },[funds]);
+
+  useEffect(()=>{
+    try{ localStorage.setItem(CAP_STORAGE_KEY, JSON.stringify(monthlyCap)); }catch(e){}
+  },[monthlyCap]);
 
   const results = useMemo(()=>{
     const map={};
@@ -531,6 +801,37 @@ function App(){
     funds.forEach(f=>{ monthly+=results[f.id].monthlyRequired; lump+=Number(f.lumpSum)||0; });
     return {monthly,lump};
   },[funds,results]);
+
+  // ---- Phân tích ngân sách: nếu đặt giới hạn góp/tháng, tìm năm nào vượt và gợi ý quỹ nào nên
+  // giữ ưu tiên (cần rút sớm) hay nên giảm/dời (chưa gấp). Quỹ "vừa góp vừa rút song song" cần
+  // tiền ngay từ bây giờ nên luôn ưu tiên cao nhất; quỹ "tích lũy trước" ưu tiên theo năm bắt đầu rút/đạt mục tiêu.
+  const budgetAnalysis = useMemo(()=>{
+    if(!monthlyCap || monthlyCap<=0) return null;
+    const maxYears = Math.max(1, ...funds.map(f=>results[f.id].totalYears));
+    const urgencyOf = (f)=> f.type==="simultaneous" ? CURRENT_YEAR : (CURRENT_YEAR + (Number(f.accYears)||0));
+    const priorityOrder = [...funds].sort((a,b)=>urgencyOf(a)-urgencyOf(b));
+
+    const yearIssues=[];
+    for(let y=1;y<=maxYears;y++){
+      const calYear = CURRENT_YEAR+y-1;
+      const active = priorityOrder.map(f=>{
+        const result = results[f.id];
+        const row = result.annualRows.find(r=>r.year===y);
+        const monthly = row && row.phase!=="Rút" ? result.monthlyRequired : 0;
+        return {fund:f, monthly};
+      }).filter(x=>x.monthly>0);
+      const total = active.reduce((s,x)=>s+x.monthly,0);
+      if(total>monthlyCap+1){
+        let running=0; const keep=[]; const cut=[];
+        active.forEach(x=>{
+          if(running+x.monthly<=monthlyCap){ running+=x.monthly; keep.push(x); }
+          else{ cut.push(x); }
+        });
+        yearIssues.push({calYear,y,total,over:total-monthlyCap,keep,cut});
+      }
+    }
+    return {priorityOrder, yearIssues};
+  },[funds,results,monthlyCap]);
 
   const updateFund=(id,next)=>setFunds(fs=>fs.map(f=>f.id===id?next:f));
   const removeFund=(id)=>setFunds(fs=>fs.filter(f=>f.id!==id));
@@ -547,8 +848,52 @@ function App(){
     setDetailFundId(seedFunds[0].id);
   };
 
+  const exportCode = ()=>{
+    try{
+      const payload = JSON.stringify({v:1, funds, monthlyCap});
+      const code = btoa(unescape(encodeURIComponent(payload)));
+      setCodeText(code);
+      setSyncOpen(true);
+      setCopyStatus("");
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(code)
+          .then(()=>setCopyStatus("✓ Đã tự động sao chép vào bộ nhớ tạm — dán (Ctrl+V) sang thiết bị kia."))
+          .catch(()=>setCopyStatus("Đã tạo mã bên dưới — bấm vào ô rồi tự sao chép (Ctrl+A, Ctrl+C)."));
+      }else{
+        setCopyStatus("Đã tạo mã bên dưới — bấm vào ô rồi tự sao chép (Ctrl+A, Ctrl+C).");
+      }
+    }catch(e){
+      alert("Không thể tạo mã, vui lòng thử lại.");
+    }
+  };
+
+  const importCode = ()=>{
+    const text = importText.trim();
+    if(!text){ alert("Vui lòng dán mã vào ô trước."); return; }
+    try{
+      const json = decodeURIComponent(escape(atob(text)));
+      const obj = JSON.parse(json);
+      if(!obj || !Array.isArray(obj.funds) || !obj.funds.length) throw new Error("invalid");
+      if(!confirm("Thao tác này sẽ THAY THẾ toàn bộ dữ liệu quỹ hiện tại trên thiết bị này bằng dữ liệu trong mã vừa dán. Tiếp tục?")) return;
+      setFunds(obj.funds.map(f=>({type:"sequential",...f})));
+      if(typeof obj.monthlyCap==="number") setMonthlyCap(obj.monthlyCap);
+      setDetailFundId(obj.funds[0].id);
+      setImportText("");
+      alert("Đã nhập dữ liệu thành công!");
+    }catch(e){
+      alert("Mã không hợp lệ hoặc bị lỗi — vui lòng kiểm tra đã dán đầy đủ, không thiếu ký tự.");
+    }
+  };
+
   const detailFund = funds.find(f=>f.id===detailFundId) || funds[0];
   const detailResult = detailFund ? results[detailFund.id] : null;
+  const detailMilestones = useMemo(()=> detailResult ? computeDoublingMilestones(detailResult.annualRows, r=>r.navEnd, r=>r.year) : {}, [detailResult]);
+  const detailCumulative = useMemo(()=>{
+    if(!detailResult) return {};
+    let running=0; const map={};
+    detailResult.annualRows.forEach(r=>{ running+=r.contribution; map[r.year]=running; });
+    return map;
+  },[detailResult]);
 
   return (
     <div>
@@ -559,9 +904,32 @@ function App(){
           <p className="subtitle">Quỹ "tích lũy trước, rút sau" dùng cho mục tiêu có mốc rõ ràng (con vào đại học). Quỹ "vừa góp vừa rút song song" dùng cho nhu cầu chi tiêu đều đặn ngay từ bây giờ (phụng dưỡng bố mẹ, du lịch hàng năm).</p>
           <div className="toolbar">
             <button className="btn primary" onClick={()=>exportExcel(funds,results)}>⬇ Xuất Excel</button>
+            <button className="btn" onClick={()=>setSyncOpen(s=>!s)}>🔗 Đồng bộ sang thiết bị khác</button>
             <button className="btn ghost" onClick={resetDefaults}>Đặt lại mặc định</button>
             <span className="save-note">Dữ liệu tự lưu trên trình duyệt này — quay lại không cần nhập lại.</span>
           </div>
+
+          {syncOpen && (
+            <div className="sync-panel">
+              <div style={{fontSize:13,fontWeight:600,marginBottom:4}}>1. Lấy mã từ thiết bị này</div>
+              <div style={{fontSize:12,color:"var(--mute)"}}>Bấm nút để tạo mã chứa toàn bộ dữ liệu các quỹ, rồi gửi/dán mã đó sang thiết bị khác.</div>
+              <div className="sync-row">
+                <button className="btn primary" onClick={exportCode}>Tạo mã dữ liệu</button>
+                {copyStatus && <span style={{fontSize:12,color:"var(--teal)"}}>{copyStatus}</span>}
+              </div>
+              {codeText && (
+                <textarea className="sync-textarea" readOnly value={codeText} onFocus={(e)=>e.target.select()} />
+              )}
+
+              <div style={{fontSize:13,fontWeight:600,margin:"18px 0 4px"}}>2. Dán mã vào thiết bị khác để nhập lại</div>
+              <div style={{fontSize:12,color:"var(--mute)"}}>Mở trang này trên thiết bị kia, dán mã đã sao chép ở bước 1 vào ô dưới rồi bấm nhập.</div>
+              <textarea className="sync-textarea" placeholder="Dán mã đã sao chép ở thiết bị cũ vào đây..." value={importText} onChange={(e)=>setImportText(e.target.value)} />
+              <div className="sync-row">
+                <button className="btn primary" onClick={importCode}>Nhập mã này (ghi đè dữ liệu hiện tại)</button>
+              </div>
+              <div style={{fontSize:11,color:"var(--mute)",marginTop:8}}>Mã chứa toàn bộ thông tin các quỹ và giới hạn góp/tháng — dán đúng nguyên mã, không chỉnh sửa, để tránh lỗi khi nhập lại.</div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -572,13 +940,63 @@ function App(){
           <div className="card"><div className="card-label">Số quỹ đang quản lý</div><div className="card-value mono">{funds.length}</div></div>
         </div>
 
+        <div className="budget-panel">
+          <div className="budget-row">
+            <div style={{fontSize:13,fontWeight:600}}>Giới hạn góp mỗi tháng (tuỳ chọn)</div>
+            <div className="budget-input"><MoneyInput value={monthlyCap} onChange={setMonthlyCap} suffix="đ/tháng" /></div>
+            <span style={{fontSize:11,color:"var(--mute)"}}>Đặt 0 để tắt cảnh báo. Ví dụ: chỉ đóng tối đa 50.000.000đ/tháng cho tất cả các quỹ.</span>
+          </div>
+
+          {budgetAnalysis && budgetAnalysis.yearIssues.length===0 && (
+            <div className="info-box" style={{marginTop:12}}>✓ Với giới hạn {fmtShort(monthlyCap)}/tháng, tất cả các năm đều đủ ngân sách — không cần cắt giảm quỹ nào.</div>
+          )}
+
+          {budgetAnalysis && budgetAnalysis.yearIssues.length>0 && (
+            <div style={{marginTop:12}}>
+              <div className="warn-box">
+                ⚠ Có {budgetAnalysis.yearIssues.length} năm tổng góp/tháng vượt giới hạn {fmtShort(monthlyCap)}/tháng — năm vượt nhiều nhất phải góp thêm khoảng {fmtShort(Math.max(...budgetAnalysis.yearIssues.map(i=>i.over)))}/tháng so với giới hạn.
+              </div>
+              <div className="table-wrap">
+                <table>
+                  <thead><tr>
+                    <th>Năm</th><th className="r">Tổng cần góp/tháng</th><th className="r">Vượt</th><th>Quỹ nên giữ ưu tiên</th><th>Quỹ nên cân nhắc giảm / dời</th>
+                  </tr></thead>
+                  <tbody>
+                    {budgetAnalysis.yearIssues.map(iss=>(
+                      <tr key={iss.calYear}>
+                        <td className="mono">{iss.calYear}</td>
+                        <td className="r mono" style={{color:"var(--rust)"}}>{fmt(iss.total)}</td>
+                        <td className="r mono" style={{color:"var(--rust)",fontWeight:700}}>+{fmt(iss.over)}</td>
+                        <td style={{fontSize:12,color:"var(--teal)"}}>{iss.keep.length? iss.keep.map(x=>x.fund.name).join(", ") : "—"}</td>
+                        <td style={{fontSize:12,color:"var(--rust)"}}>{iss.cut.map(x=>x.fund.name).join(", ")}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div style={{fontSize:12,color:"var(--mute)",marginTop:10,lineHeight:1.6}}>
+                <b>Thứ tự ưu tiên</b> (quỹ cần rút/đạt mục tiêu sớm nhất được giữ nguyên góp trước): {budgetAnalysis.priorityOrder.map(f=>f.name).join(" → ")}.
+                Với các quỹ "nên cân nhắc giảm/dời", bạn có thể: giảm số tiền mục tiêu, kéo dài thêm số năm tích lũy, hoặc lùi thời điểm bắt đầu rút — vào tab "Thiết lập từng quỹ" để chỉnh.
+              </div>
+            </div>
+          )}
+        </div>
+
         <div className="tabs">
           <button className={"tab"+(tab==="overview"?" active":"")} onClick={()=>setTab("overview")}>Tổng quan & Biểu đồ</button>
           <button className={"tab"+(tab==="funds"?" active":"")} onClick={()=>setTab("funds")}>Thiết lập từng quỹ</button>
-          <button className={"tab"+(tab==="details"?" active":"")} onClick={()=>setTab("details")}>Bảng chi tiết theo năm</button>
+          <button className={"tab"+(tab==="summary"?" active":"")} onClick={()=>setTab("summary")}>Tổng hợp theo năm</button>
+          <button className={"tab"+(tab==="details"?" active":"")} onClick={()=>setTab("details")}>Bảng chi tiết 1 quỹ</button>
         </div>
 
-        {tab==="overview" && <ChartPanel funds={funds} results={results} />}
+        {tab==="overview" && (
+          <div>
+            <CashFlowChart funds={funds} results={results} />
+            <ChartPanel funds={funds} results={results} />
+          </div>
+        )}
+
+        {tab==="summary" && <YearlySummaryTable funds={funds} results={results} />}
 
         {tab==="funds" && (
           <div>
@@ -602,9 +1020,14 @@ function App(){
               ))}
             </div>
             <div className="panel">
+              {Object.keys(detailMilestones).length>0 && (
+                <div className="chart-note" style={{paddingBottom:12}}>
+                  <span className="milestone-legend"><span className="milestone-swatch"></span>Ô tô xanh = số dư cuối năm đã nhân đôi so với mốc trước đó (so với năm đầu tiên)</span>
+                </div>
+              )}
               <table>
                 <thead><tr>
-                  <th>Năm</th><th>Giai đoạn</th><th className="r">Góp vào</th><th className="r">Rút ra</th><th className="r">Lãi trong năm</th><th className="r">Số dư cuối năm</th>
+                  <th>Năm</th><th>Giai đoạn</th><th className="r">Góp vào</th><th className="r">Góp lũy kế</th><th className="r">Rút ra</th><th className="r">Lãi trong năm</th><th className="r">Số dư cuối năm</th>
                 </tr></thead>
                 <tbody>
                   {detailResult.annualRows.map(r=>(
@@ -612,9 +1035,10 @@ function App(){
                       <td className="mono">{r.calYear} <span style={{color:"var(--mute)"}}>(N{r.year})</span></td>
                       <td><span className={"badge "+(r.phase==="Tích lũy"?"acc":r.phase==="Rút"?"wd":"both")}>{r.phase}</span></td>
                       <td className="r mono" style={{color: r.contribution?"var(--teal)":"var(--mute)"}}>{r.contribution?fmt(r.contribution):"—"}</td>
+                      <td className="r mono" style={{color:"var(--gold)"}}>{fmt(detailCumulative[r.year])}</td>
                       <td className="r mono" style={{color: r.withdrawal?"var(--rust)":"var(--mute)"}}>{r.withdrawal?"-"+fmt(r.withdrawal):"—"}</td>
                       <td className="r mono" style={{color:"var(--mute)"}}>{fmt(r.interest)}</td>
-                      <td className="r mono" style={{fontWeight:700, color: r.navEnd<0 ? "var(--rust)" : "var(--ink)"}}>{fmt(r.navEnd)}</td>
+                      <td className={"r mono"+(detailMilestones[r.year]?" cell-x2":"")} data-mult={detailMilestones[r.year]||undefined} style={{fontWeight:700, color: detailMilestones[r.year] ? undefined : (r.navEnd<0 ? "var(--rust)" : "var(--ink)")}}>{fmt(r.navEnd)}</td>
                     </tr>
                   ))}
                 </tbody>
