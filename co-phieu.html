@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bảng Điều Khiển Danh Mục</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- Không dùng CDN ngoài: biểu đồ vẽ bằng SVG thuần, xuất Excel bằng XML gốc — để app chạy độc lập, không phụ thuộc mạng -->
+<script>
+/* ===== Sinh file Excel (.xls, định dạng SpreadsheetML) không cần thư viện ngoài ===== */
+function xmlEscape(v){
+  return String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function sheetXML(name, rows){
+  if(!rows.length) rows=[{'(trống)':''}];
+  const cols = Object.keys(rows[0]);
+  let rowsXml = `<Row>${cols.map(c=>`<Cell><Data ss:Type="String">${xmlEscape(c)}</Data></Cell>`).join('')}</Row>`;
+  rows.forEach(r=>{
+    rowsXml += `<Row>${cols.map(c=>{
+      const v = r[c];
+      const isNum = typeof v==='number' && isFinite(v);
+      return `<Cell><Data ss:Type="${isNum?'Number':'String'}">${xmlEscape(v===undefined?'':v)}</Data></Cell>`;
+    }).join('')}</Row>`;
+  });
+  return `<Worksheet ss:Name="${xmlEscape(name)}"><Table>${rowsXml}</Table></Worksheet>`;
+}
+function buildWorkbookXML(sheetsObj){
+  const sheets = Object.entries(sheetsObj).map(([name,rows])=>sheetXML(name, rows)).join('');
+  return `<?xml version="1.0"?><?mso-application progid="Excel.Sheet"?>` +
+    `<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">` +
+    sheets + `</Workbook>`;
+}
+function downloadWorkbook(sheetsObj, filename){
+  const xml = buildWorkbookXML(sheetsObj);
+  const blob = new Blob([xml], {type:'application/vnd.ms-excel'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+function parseWorkbookXML(xmlText){
+  const doc = new DOMParser().parseFromString(xmlText, 'text/xml');
+  const out = {};
+  doc.querySelectorAll('Worksheet').forEach(ws=>{
+    const name = ws.getAttribute('ss:Name');
+    const rowsEl = Array.from(ws.querySelectorAll('Table > Row'));
+    if(!rowsEl.length){ out[name]=[]; return; }
+    const headerCells = Array.from(rowsEl[0].querySelectorAll('Cell > Data')).map(d=>d.textContent);
+    const rows = [];
+    rowsEl.slice(1).forEach(r=>{
+      const cells = Array.from(r.querySelectorAll('Cell > Data')).map(d=>d.textContent);
+      const obj = {};
+      headerCells.forEach((h,i)=>obj[h]=cells[i]!==undefined?cells[i]:'');
+      rows.push(obj);
+    });
+    out[name]=rows;
+  });
+  return out;
+}
+</script>
+<style>
+:root{
+  --bg:#F2F4F7;
+  --panel:#FFFFFF;
+  --line:#DBE1E9;
+  --line-soft:#E9EDF2;
+  --ink:#151C29;
+  --ink-dim:#5A6579;
+  --ink-faint:#8D96A6;
+  --loi:#178B52;         /* LỜI = xanh lá (theo yêu cầu) */
+  --loi-soft:#178B521A;
+  --lo:#D6373F;           /* LỖ = đỏ */
+  --lo-soft:#D6373F1A;
+  --hoa:#B8860B;          /* HÒA / trung lập = vàng */
+  --hoa-soft:#B8860B1A;
+  --tran:#9740B0;         /* cảnh báo vượt trần tỉ trọng = tím */
+  --tran-soft:#9740B01A;
+  --accent:#2E68D6;
+  --accent-soft:#2E68D614;
+  --radius:10px;
+  --font-display:'Fraunces', serif;
+  --font-body:'Inter', sans-serif;
+  --font-mono:'JetBrains Mono', monospace;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);}
+body{padding-bottom:80px;}
+::selection{background:#2E68D633;}
+a{color:inherit;}
+.wrap{max-width:1320px;margin:0 auto;padding:0 22px;}
+
+/* ---------- topbar ---------- */
+.topbar{position:sticky;top:0;z-index:40;background:linear-gradient(180deg,#F2F4F7F5,#F2F4F7E8 70%,#F2F4F700);backdrop-filter:blur(6px);border-bottom:1px solid var(--line-soft);}
+.topbar-inner{display:flex;align-items:center;justify-content:space-between;padding:14px 0;gap:16px;flex-wrap:wrap;}
+.home-link{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:12.5px;letter-spacing:.04em;color:var(--ink-dim);text-decoration:none;border:1px solid var(--line);background:var(--panel);padding:7px 12px;border-radius:999px;transition:.15s;}
+.home-link:hover{color:var(--ink);border-color:var(--accent);}
+.brand{display:flex;align-items:baseline;gap:10px;}
+.brand h1{font-family:var(--font-display);font-weight:600;font-size:22px;margin:0;letter-spacing:.01em;}
+.brand .tick{font-family:var(--font-mono);font-size:11px;color:var(--ink-faint);}
+.clock{font-family:var(--font-mono);font-size:12px;color:var(--ink-faint);}
+.save-status{font-family:var(--font-mono);font-size:10.5px;color:var(--ink-faint);display:flex;align-items:center;gap:5px;}
+.save-status .dot{width:6px;height:6px;border-radius:50%;background:var(--loi);}
+
+/* ---------- capital panel ---------- */
+.capital{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--line-soft);border:1px solid var(--line-soft);border-radius:var(--radius);overflow:hidden;margin:20px 0;}
+.cap-cell{background:var(--panel);padding:14px 16px;}
+.cap-cell label{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-faint);margin-bottom:6px;}
+.cap-cell input[type=text],.cap-cell select{width:100%;background:transparent;border:none;border-bottom:1.5px dashed var(--line);color:var(--ink);font-family:var(--font-mono);font-size:16px;font-weight:600;padding:0 0 3px;outline:none;}
+.cap-cell input[type=text]:focus,.cap-cell select:focus{border-bottom-color:var(--accent);}
+.cap-cell .out{font-family:var(--font-mono);font-size:16px;font-weight:600;}
+.cap-cell .sub{font-size:10.5px;color:var(--ink-faint);margin-top:3px;font-family:var(--font-mono);}
+.cap-cell.toggle{display:flex;flex-direction:column;justify-content:center;}
+.switch{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;}
+.switch input{accent-color:var(--accent);width:15px;height:15px;}
+.switch span{font-size:12.5px;color:var(--ink-dim);}
+
+/* ---------- tabs ---------- */
+.tabs{display:flex;gap:6px;margin:26px 0 16px;border-bottom:1px solid var(--line-soft);}
+.tab-btn{font-family:var(--font-display);font-size:16px;background:none;border:none;color:var(--ink-faint);padding:9px 4px 12px;cursor:pointer;position:relative;margin-right:22px;transition:.15s;}
+.tab-btn.active{color:var(--ink);}
+.tab-btn.active::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--accent);border-radius:2px;}
+.tab-btn .n{font-family:var(--font-mono);font-size:11px;color:var(--ink-faint);margin-right:6px;}
+
+.panel{display:none;}
+.panel.active{display:block;}
+
+/* ---------- section headers ---------- */
+.sec-head{display:flex;align-items:center;justify-content:space-between;margin:28px 0 12px;flex-wrap:wrap;gap:10px;}
+.sec-head h2{font-family:var(--font-display);font-size:18px;font-weight:600;margin:0;}
+.sec-head .eyebrow{font-family:var(--font-mono);font-size:10.5px;color:var(--ink-faint);letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:2px;}
+
+/* ---------- buttons ---------- */
+.btn{font-family:var(--font-mono);font-size:12px;border-radius:7px;padding:8px 14px;border:1px solid var(--line);background:var(--panel);color:var(--ink-dim);cursor:pointer;transition:.15s;display:inline-flex;align-items:center;gap:7px;}
+.btn:hover{color:var(--ink);border-color:var(--accent);}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600;}
+.btn.primary:hover{filter:brightness(1.08);}
+.btn.ghost{background:none;}
+.btn.danger:hover{border-color:var(--lo);color:var(--lo);}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;}
+
+/* ---------- table ---------- */
+.table-scroll{overflow-x:auto;border:1px solid var(--line-soft);border-radius:var(--radius);background:var(--panel);}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:1180px;}
+thead th{background:#FAFBFC;text-align:left;font-family:var(--font-mono);font-weight:500;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);padding:10px 10px;border-bottom:1px solid var(--line-soft);white-space:nowrap;}
+tbody td{padding:7px 10px;border-bottom:1px solid var(--line-soft);vertical-align:middle;}
+tbody tr:hover{background:#F5F8FC;}
+tbody input,tbody textarea{width:100%;background:transparent;border:none;border-bottom:1.5px dashed var(--line);color:var(--ink);font-family:var(--font-mono);font-size:13px;padding:4px 2px;outline:none;border-radius:0;}
+tbody input:focus,tbody textarea:focus{background:var(--accent-soft);border-bottom-color:var(--accent);}
+tbody input.mact{font-family:var(--font-body);font-weight:600;}
+tbody textarea{resize:vertical;font-family:var(--font-body);font-size:12.5px;min-height:32px;border:1px dashed var(--line);padding:5px 6px;}
+.num{font-family:var(--font-mono);text-align:right;white-space:nowrap;}
+.pos{color:var(--loi);} .neg{color:var(--lo);} .flat{color:var(--hoa);}
+.rm-btn{background:none;border:none;color:var(--ink-faint);cursor:pointer;font-size:15px;line-height:1;padding:4px;}
+.rm-btn:hover{color:var(--lo);}
+.tag{display:inline-block;font-family:var(--font-mono);font-size:10px;padding:2px 7px;border-radius:5px;font-weight:600;}
+.tag.over{background:var(--tran-soft);color:var(--tran);}
+
+/* ---------- alerts ---------- */
+.alerts{display:flex;flex-direction:column;gap:8px;margin:14px 0 6px;}
+.alert{display:flex;align-items:flex-start;gap:10px;padding:11px 14px;border-radius:8px;font-size:13px;border:1px solid;}
+.alert.chotloi{background:var(--loi-soft);border-color:#178B5244;color:#0E5C36;}
+.alert.tytrong{background:var(--tran-soft);border-color:#9740B044;color:#6E2D82;}
+.alert .ico{font-family:var(--font-mono);font-weight:700;}
+.alert b{color:var(--ink);}
+.empty-note{font-size:12.5px;color:var(--ink-faint);font-family:var(--font-mono);padding:10px 2px;}
+
+/* ---------- grid layouts ---------- */
+.grid-charts{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+.card{background:var(--panel);border:1px solid var(--line-soft);border-radius:var(--radius);padding:16px;}
+.card h3{font-family:var(--font-display);font-size:14.5px;font-weight:600;margin:0 0 3px;}
+.card .cap{font-family:var(--font-mono);font-size:10.5px;color:var(--ink-faint);margin-bottom:10px;}
+.legend-row{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-family:var(--font-mono);font-size:11px;color:var(--ink-dim);}
+.legend-row span.dot{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px;}
+
+/* ---------- checklist ---------- */
+.checklist{display:flex;flex-direction:column;}
+.chk-item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px dashed var(--line-soft);font-size:12.8px;color:var(--ink);}
+.chk-item .chk-txt{flex:1;}
+.chk-toggle{display:flex;gap:6px;flex-shrink:0;}
+.chk-btn{font-family:var(--font-mono);font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--ink-faint);cursor:pointer;transition:.15s;}
+.chk-btn.yes.active{background:var(--loi-soft);color:var(--loi);border-color:var(--loi);font-weight:600;}
+.chk-btn.no.active{background:var(--lo-soft);color:var(--lo);border-color:var(--lo);font-weight:600;}
+.chk-summary{margin-top:14px;padding:11px 14px;border-radius:8px;font-family:var(--font-mono);font-size:12.5px;background:var(--line-soft);color:var(--ink-dim);}
+.chk-summary.good{background:var(--loi-soft);color:#0E5C36;}
+.chk-summary.bad{background:var(--lo-soft);color:#8C232A;}
+
+/* ---------- DCA tab ---------- */
+.dca-form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.field{display:flex;flex-direction:column;gap:5px;}
+.field label{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-faint);font-family:var(--font-mono);}
+.field input,.field select{background:var(--bg);border:1px solid var(--line);color:var(--ink);font-family:var(--font-mono);font-size:13.5px;padding:8px 10px;border-radius:7px;outline:none;}
+.field input:focus,.field select:focus{border-color:var(--accent);background:var(--panel);}
+.stat-strip{display:flex;gap:0;margin-top:16px;border:1px solid var(--line-soft);border-radius:var(--radius);overflow:hidden;background:var(--panel);flex-wrap:wrap;}
+.stat{flex:1;min-width:120px;padding:12px 14px;border-right:1px solid var(--line-soft);}
+.stat:last-child{border-right:none;}
+.stat .l{font-family:var(--font-mono);font-size:10px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;}
+.stat .v{font-family:var(--font-mono);font-size:16px;font-weight:600;}
+.rr-good{color:var(--loi);} .rr-bad{color:var(--lo);}
+
+.dca-list{display:flex;flex-direction:column;gap:12px;}
+.dca-item{border:1px solid var(--line-soft);border-radius:var(--radius);padding:16px;background:var(--panel);}
+.dca-item-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;}
+.footer-note{margin-top:34px;padding:14px 16px;border:1px dashed var(--line);border-radius:var(--radius);font-size:12px;color:var(--ink-faint);font-family:var(--font-mono);line-height:1.6;background:var(--panel);}
+
+@media(max-width:920px){
+  .capital{grid-template-columns:repeat(3,1fr);}
+  .grid-charts{grid-template-columns:1fr;}
+  .dca-form{grid-template-columns:repeat(2,1fr);}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar"><div class="wrap topbar-inner">
+  <a class="home-link" href="Index.html">&larr;&nbsp; Trang chủ</a>
+  <div class="brand"><h1>Bảng Điều Khiển Danh Mục</h1><span class="tick">HOSE / HNX</span></div>
+  <div style="display:flex;align-items:center;gap:16px;">
+    <div class="save-status" id="saveStatus"><span class="dot"></span><span>Đã lưu tự động</span></div>
+    <div class="clock" id="clock">—</div>
+  </div>
+</div></div>
+
+<div class="wrap">
+
+  <!-- ============ VỐN ============ -->
+  <div class="capital">
+    <div class="cap-cell">
+      <label>Vốn tự có (NAV)</label>
+      <input type="text" inputmode="numeric" id="capNav" value="1.000.000.000">
+      <div class="sub" id="capNavFmt">—</div>
+    </div>
+    <div class="cap-cell toggle">
+      <label class="switch"><input type="checkbox" id="capMarginOn"><span>Dùng Margin</span></label>
+      <div class="sub" id="capMarginRatioTxt" style="margin-top:8px;">Tỉ lệ vay tối đa 1&nbsp;:&nbsp;1</div>
+    </div>
+    <div class="cap-cell">
+      <label>Tỉ lệ vay (x : 1)</label>
+      <select id="capMarginRatio">
+        <option value="0.5">0.5&nbsp;:&nbsp;1</option>
+        <option value="1" selected>1&nbsp;:&nbsp;1</option>
+        <option value="1.5">1.5&nbsp;:&nbsp;1</option>
+        <option value="2">2&nbsp;:&nbsp;1</option>
+      </select>
+    </div>
+    <div class="cap-cell">
+      <label>Sức mua khả dụng</label>
+      <div class="out" id="capBuyPower">—</div>
+      <div class="sub" id="capBuyPowerSub">—</div>
+    </div>
+    <div class="cap-cell">
+      <label>Đã giải ngân (giá vốn)</label>
+      <div class="out" id="capDeployed">—</div>
+      <div class="sub" id="capDeployedSub">—</div>
+    </div>
+    <div class="cap-cell">
+      <label>Tiền mặt còn lại</label>
+      <div class="out" id="capCash">—</div>
+      <div class="sub" id="capCashSub">—</div>
+    </div>
+  </div>
+
+  <!-- ============ TABS ============ -->
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="t1"><span class="n">01</span>Theo dõi danh mục</button>
+    <button class="tab-btn" data-tab="t2"><span class="n">02</span>Tính DCA / Tích sản</button>
+  </div>
+
+  <!-- ============ TAB 1 ============ -->
+  <div class="panel active" id="t1">
+
+    <div class="sec-head">
+      <div><span class="eyebrow">Danh sách nắm giữ</span><h2>Cổ phiếu trong danh mục</h2></div>
+      <div class="btn-row">
+        <button class="btn" id="btnPaste">📋 Dán bảng giá</button>
+        <button class="btn" id="btnAddRow">+ Thêm mã</button>
+        <button class="btn primary" id="btnExport">⬇ Xuất Excel</button>
+        <label class="btn" for="fileImport" style="cursor:pointer;">⬆ Nhập Excel</label>
+        <input type="file" id="fileImport" accept=".xls,.xml" style="display:none;">
+      </div>
+    </div>
+
+    <div class="table-scroll">
+      <table>
+        <thead><tr>
+          <th></th><th>Mã</th><th>Giá mua</th><th>Giá hiện tại</th><th>SL</th><th>Ngày mua</th>
+          <th>T+</th><th>GT mua</th><th>GT hiện tại</th><th>% Lời/Lỗ</th><th>Tiền lời/lỗ</th>
+          <th>Tỉ trọng</th><th style="min-width:220px;">Ghi chú</th><th></th>
+        </tr></thead>
+        <tbody id="tblBody"></tbody>
+      </table>
+    </div>
+
+    <div class="alerts" id="alertsBox"></div>
+
+    <div class="sec-head">
+      <div><span class="eyebrow">Trực quan hoá</span><h2>Phân bổ vốn</h2></div>
+    </div>
+    <div class="grid-charts">
+      <div class="card">
+        <h3>Phân bổ theo giá trị mua</h3>
+        <div class="cap">Vốn gốc đã bỏ vào từng mã — so với vòng bên phải để thấy độ lệch</div>
+        <div id="chartCost" style="display:flex;justify-content:center;"></div>
+        <div class="legend-row" id="legendCost"></div>
+      </div>
+      <div class="card">
+        <h3>Phân bổ theo giá trị hiện tại</h3>
+        <div class="cap">Cùng màu mỗi mã với vòng bên trái — mã nào phình to hơn là đang lời nhiều</div>
+        <div id="chartCurrent" style="display:flex;justify-content:center;"></div>
+        <div class="legend-row" id="legendCurrent"></div>
+      </div>
+    </div>
+
+    <div class="sec-head">
+      <div><span class="eyebrow">Trước khi bấm lệnh</span><h2>Checklist chọn cổ phiếu</h2></div>
+    </div>
+    <div class="card">
+      <div class="checklist" id="checklistBox"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2 ============ -->
+  <div class="panel" id="t2">
+    <div class="sec-head">
+      <div><span class="eyebrow">Kế hoạch giải ngân</span><h2>Tính phương án tích sản / DCA</h2></div>
+      <button class="btn primary" id="btnAddDca">+ Thêm kế hoạch</button>
+    </div>
+    <div class="empty-note" id="dcaEmpty">Chưa có kế hoạch nào — bấm "Thêm kế hoạch" để bắt đầu tính DCA cho một mã.</div>
+    <div class="dca-list" id="dcaList"></div>
+
+    <div class="footer-note">
+      Cách tính: vốn giải ngân được chia theo tỉ trọng tăng dần khi giá càng rẻ (mua ít ở vùng giá cao, mua nhiều ở vùng giá thấp). Mỗi lần mua gắn với một mốc giá kích hoạt và một mốc thời gian gợi ý trong khung thời gian gom mua. Số lượng mỗi lần mua được làm tròn về lô chẵn 100 cổ phiếu (100, 200, 300…) để đặt lệnh thực tế dễ khớp, không còn số lẻ kiểu 150, 1050. Toàn bộ tham số có thể tự chỉnh.
+    </div>
+  </div>
+
+  <div class="footer-note" id="storageNote">
+    App tự lưu dữ liệu ngay trong trình duyệt bạn đang dùng — không cần Xuất/Nhập Excel mỗi lần. Chỉ dùng <b style="color:var(--ink);">Xuất Excel</b> khi muốn sao lưu hoặc chuyển danh mục sang máy/trình duyệt khác.
+  </div>
+
+</div>
+
+<script>
+/* ================= tiện ích ================= */
+const fmt = n => Math.round(n).toLocaleString('vi-VN');
+const fmtPct = n => (n>=0?'+':'') + n.toFixed(2) + '%';
+const todayStr = () => new Date().toISOString().slice(0,10);
+const digitsOnly = s => (s||'').toString().replace(/[^\d]/g,'');
+const groupVN = d => d ? Number(d).toLocaleString('vi-VN') : '';
+
+/* caret-preserving live thousand-separator formatting */
+function liveFormatMoney(el){
+  const start = el.selectionStart;
+  const digitsBefore = digitsOnly(el.value.slice(0,start)).length;
+  const digits = digitsOnly(el.value);
+  el.value = groupVN(digits);
+  let pos = el.value.length, count = 0;
+  if(digitsBefore===0){ pos = 0; }
+  else{
+    for(let i=0;i<el.value.length;i++){
+      if(/\d/.test(el.value[i])) count++;
+      if(count===digitsBefore){ pos=i+1; break; }
+    }
+  }
+  try{ el.setSelectionRange(pos,pos); }catch(e){}
+  return digits ? Number(digits) : 0;
+}
+
+/* ---------------- clock ---------------- */
+function tickClock(){
+  const d = new Date();
+  document.getElementById('clock').textContent = d.toLocaleDateString('vi-VN') + '  ·  ' + d.toLocaleTimeString('vi-VN');
+}
+tickClock(); setInterval(tickClock,1000);
+
+/* ---------------- business-day T+ ---------------- */
+function tradingDaysBetween(startStr){
+  if(!startStr) return 0;
+  const start = new Date(startStr+'T00:00:00');
+  const end = new Date(todayStr()+'T00:00:00');
+  if(end<=start) return 0;
+  let days=0, cur=new Date(start);
+  while(cur<end){
+    cur.setDate(cur.getDate()+1);
+    const dow = cur.getDay();
+    if(dow!==0 && dow!==6) days++;
+  }
+  return days;
+}
+
+/* ---------------- state ---------------- */
+let holdings = [
+  {ma:'HPG', giaMua:22000, giaHt:23500, sl:10000, ngayMua: todayStr(), ghiChu:'Mua khi chạm MA20 hỗ trợ cứng, vol tăng'},
+];
+let dcaPlans = [];
+let checklistState = {}; // {index: 'yes'|'no'}
+
+const CHECKLIST_ITEMS = [
+  'Đã tạo đỉnh trung/dài hạn chưa?',
+  'P/E, P/B thị trường & của cổ đã đủ rẻ chưa?',
+  'Biên an toàn so với định giá CTCK > 20-30-50%?',
+  'Lợi nhuận quý/năm gần nhất tăng hay giảm?',
+  'Có game / câu chuyện tăng trưởng nào không?',
+  'Khối ngoại & tự doanh đang mua hay bán ròng?',
+  'Nội bộ có đăng ký mua/bán cổ phiếu không?',
+  'Có dự án mới sắp bán / ghi nhận doanh thu?',
+  'Tồn kho có đang ở vùng giá rẻ không?',
+  'Vốn hoá nhỏ nhưng lợi nhuận mang lại cao (BLN tốt)?',
+  'DN có vị thế độc quyền / rào cản gia nhập ngành lớn?',
+  'Ban lãnh đạo tập trung sản xuất hay "đánh đấm" thổi giá?',
+  'Tiền mặt ròng / cổ phiếu có rẻ hơn thị giá không?',
+  'Vùng giá đã chiết khấu 25-30% từ đỉnh, có vùng đệm an toàn?',
+];
+
+/* ================= LƯU TỰ ĐỘNG (window.storage nếu có, fallback localStorage) ================= */
+const STORAGE_KEY = 'danh-muc-portfolio-v1';
+let saveTimer = null;
+function saveState(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async ()=>{
+    const statusEl = document.getElementById('saveStatus');
+    try{
+      const payload = JSON.stringify({
+        holdings, dcaPlans, checklistState,
+        capNav: digitsOnly(document.getElementById('capNav').value),
+        capMarginOn: document.getElementById('capMarginOn').checked,
+        capMarginRatio: document.getElementById('capMarginRatio').value
+      });
+      if(window.storage && window.storage.set){
+        await window.storage.set(STORAGE_KEY, payload, false);
+      } else if(window.localStorage){
+        localStorage.setItem(STORAGE_KEY, payload);
+      } else { throw new Error('no storage'); }
+      if(statusEl){ statusEl.querySelector('span:last-child').textContent='Đã lưu tự động'; statusEl.querySelector('.dot').style.background='var(--loi)'; }
+    }catch(e){
+      if(statusEl){ statusEl.querySelector('span:last-child').textContent='Chưa lưu được — hãy Xuất Excel'; statusEl.querySelector('.dot').style.background='var(--lo)'; }
+    }
+  }, 350);
+}
+async function loadState(){
+  try{
+    let raw = null;
+    if(window.storage && window.storage.get){
+      try{ const r = await window.storage.get(STORAGE_KEY, false); raw = r ? r.value : null; }
+      catch(e){ raw = null; } // key chưa tồn tại
+    } else if(window.localStorage){
+      raw = localStorage.getItem(STORAGE_KEY);
+    }
+    if(!raw) return false;
+    const data = JSON.parse(raw);
+    if(Array.isArray(data.holdings) && data.holdings.length) holdings = data.holdings;
+    if(Array.isArray(data.dcaPlans)) dcaPlans = data.dcaPlans;
+    if(data.checklistState) checklistState = data.checklistState;
+    if(data.capNav!==undefined) document.getElementById('capNav').value = groupVN(data.capNav);
+    if(data.capMarginOn!==undefined) document.getElementById('capMarginOn').checked = data.capMarginOn;
+    if(data.capMarginRatio!==undefined) document.getElementById('capMarginRatio').value = data.capMarginRatio;
+    return true;
+  }catch(e){ return false; }
+}
+
+/* ================= VỐN ================= */
+function readCapital(){
+  const nav = Number(digitsOnly(document.getElementById('capNav').value))||0;
+  const marginOn = document.getElementById('capMarginOn').checked;
+  const ratio = parseFloat(document.getElementById('capMarginRatio').value)||0;
+  const marginAmt = marginOn ? nav*ratio : 0;
+  const buyPower = nav + marginAmt;
+  return {nav, marginOn, ratio, marginAmt, buyPower};
+}
+function renderCapital(){
+  const cap = readCapital();
+  document.getElementById('capNavFmt').textContent = fmt(cap.nav) + ' đ';
+  document.getElementById('capMarginRatioTxt').textContent = cap.marginOn
+    ? `Vay thêm tối đa: ${fmt(cap.marginAmt)} đ` : 'Không sử dụng margin';
+  document.getElementById('capBuyPower').textContent = fmt(cap.buyPower)+' đ';
+  document.getElementById('capBuyPowerSub').textContent = cap.marginOn
+    ? `Vốn ${fmt(cap.nav)} + vay ${fmt(cap.marginAmt)}` : 'Chỉ vốn tự có';
+
+  const deployed = holdings.reduce((s,h)=>s+h.giaMua*h.sl,0);
+  document.getElementById('capDeployed').textContent = fmt(deployed)+' đ';
+  document.getElementById('capDeployedSub').textContent = cap.buyPower>0 ? (deployed/cap.buyPower*100).toFixed(1)+'% sức mua' : '—';
+
+  const cash = cap.buyPower - deployed;
+  const cashEl = document.getElementById('capCash');
+  cashEl.textContent = fmt(cash)+' đ';
+  cashEl.style.color = cash<0 ? 'var(--lo)' : 'var(--ink)';
+  document.getElementById('capCashSub').textContent = cash<0 ? 'Đang vượt sức mua!' : 'Sẵn sàng giải ngân';
+  return cap;
+}
+
+/* ================= TAB 1: BẢNG ================= */
+function calcRow(h){
+  const gtMua = h.giaMua*h.sl;
+  const gtHt = h.giaHt*h.sl;
+  const pct = h.giaMua>0 ? (h.giaHt-h.giaMua)/h.giaMua*100 : 0;
+  const lai = gtHt-gtMua;
+  const tplus = tradingDaysBetween(h.ngayMua);
+  return {gtMua,gtHt,pct,lai,tplus};
+}
+function pctClass(pct){ return pct>0?'pos':(pct<0?'neg':'flat'); }
+
+function renderTable(){
+  const tbody = document.getElementById('tblBody');
+  tbody.innerHTML='';
+  holdings.forEach((h,idx)=>{
+    const tr = document.createElement('tr');
+    tr.id = 'row-'+idx;
+    tr.innerHTML = `
+      <td>${idx+1}</td>
+      <td><input class="mact" data-i="${idx}" data-f="ma" value="${h.ma}" style="width:70px;"></td>
+      <td class="num"><input data-i="${idx}" data-f="giaMua" data-money="1" type="text" inputmode="numeric" value="${groupVN(h.giaMua)}" style="width:85px;text-align:right;"></td>
+      <td class="num"><input data-i="${idx}" data-f="giaHt" data-money="1" type="text" inputmode="numeric" value="${groupVN(h.giaHt)}" style="width:85px;text-align:right;"></td>
+      <td class="num"><input data-i="${idx}" data-f="sl" data-money="1" type="text" inputmode="numeric" value="${groupVN(h.sl)}" style="width:85px;text-align:right;"></td>
+      <td><input data-i="${idx}" data-f="ngayMua" type="date" value="${h.ngayMua}" style="width:130px;"></td>
+      <td class="num" data-out="tplus">0</td>
+      <td class="num" data-out="gtMua">0</td>
+      <td class="num" data-out="gtHt">0</td>
+      <td class="num" data-out="pct">0</td>
+      <td class="num" data-out="lai">0</td>
+      <td class="num" data-out="weight">0</td>
+      <td><textarea data-i="${idx}" data-f="ghiChu" rows="1">${h.ghiChu||''}</textarea></td>
+      <td><button class="rm-btn" data-rm="${idx}">✕</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  tbody.querySelectorAll('input,textarea').forEach(el=>{
+    el.addEventListener('input', e=>{
+      const i = +e.target.dataset.i, f = e.target.dataset.f;
+      if(e.target.dataset.money){
+        holdings[i][f] = liveFormatMoney(e.target);
+      } else {
+        holdings[i][f] = e.target.value;
+      }
+      updateComputed();
+    });
+  });
+  tbody.querySelectorAll('[data-rm]').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      holdings.splice(+e.target.dataset.rm,1);
+      renderAll();
+    });
+  });
+
+  updateComputed();
+}
+
+function updateComputed(){
+  const totalCurrent = holdings.reduce((s,h)=>s+h.giaHt*h.sl,0);
+  const cap = readCapital();
+  const deployed = holdings.reduce((s,h)=>s+h.giaMua*h.sl,0);
+  const cash = Math.max(cap.buyPower-deployed,0);
+  const totalForWeight = totalCurrent + cash;
+
+  holdings.forEach((h,idx)=>{
+    const row = document.getElementById('row-'+idx);
+    if(!row) return;
+    const c = calcRow(h);
+    const weight = totalForWeight>0 ? c.gtHt/totalForWeight*100 : 0;
+    row.querySelector('[data-out="tplus"]').textContent = c.tplus;
+    row.querySelector('[data-out="gtMua"]').textContent = fmt(c.gtMua);
+    row.querySelector('[data-out="gtHt"]').textContent = fmt(c.gtHt);
+    const pctEl = row.querySelector('[data-out="pct"]');
+    pctEl.textContent = fmtPct(c.pct); pctEl.className = 'num '+pctClass(c.pct);
+    const laiEl = row.querySelector('[data-out="lai"]');
+    laiEl.textContent = fmt(c.lai); laiEl.className = 'num '+pctClass(c.lai);
+    row.querySelector('[data-out="weight"]').innerHTML = weight.toFixed(1)+'%'+(weight>25?' <span class="tag over">&gt;25%</span>':'');
+  });
+
+  renderCapital();
+  renderAlerts(totalForWeight, cash, cap);
+  renderCharts(cash);
+  saveState();
+}
+
+function renderAlerts(totalForWeight, cash, cap){
+  const box = document.getElementById('alertsBox');
+  box.innerHTML='';
+  let any=false;
+  holdings.forEach(h=>{
+    const c = calcRow(h);
+    const weight = totalForWeight>0 ? c.gtHt/totalForWeight*100 : 0;
+    if(c.pct>=15){
+      any=true;
+      const div=document.createElement('div');
+      div.className='alert chotloi';
+      div.innerHTML=`<span class="ico">◆</span><div><b>${h.ma}</b> đang lời ${fmtPct(c.pct)} — cân nhắc chốt lời một phần, chuyển bớt sang mã đang lãi ít hơn hoặc để dành tiền chờ nhịp chỉnh.</div>`;
+      box.appendChild(div);
+    }
+    if(weight>25){
+      any=true;
+      const div=document.createElement('div');
+      div.className='alert tytrong';
+      div.innerHTML=`<span class="ico">◆</span><div><b>${h.ma}</b> chiếm ${weight.toFixed(1)}% danh mục, vượt trần 25%/mã — nên hạ tỉ trọng để cân bằng lại rủi ro tập trung.</div>`;
+      box.appendChild(div);
+    }
+  });
+  if(cap.buyPower>0 && cash<0){
+    any=true;
+    const div=document.createElement('div');
+    div.className='alert tytrong';
+    div.innerHTML=`<span class="ico">◆</span><div>Tổng giá trị mua đang <b>vượt sức mua khả dụng</b> — kiểm tra lại margin hoặc số lượng đã nhập.</div>`;
+    box.appendChild(div);
+  }
+  if(!any) box.innerHTML = '<div class="empty-note">Chưa có cảnh báo nào — danh mục đang trong ngưỡng an toàn.</div>';
+}
+
+/* ================= BIỂU ĐỒ (SVG thuần) ================= */
+const PALETTE = ['#2E68D6','#B8860B','#7B5FD9','#1B9C7A','#D0722F','#9740B0','#3F9BC7','#7A8A3A'];
+
+function buildDonutSVG(slices, opts={}){
+  const size = opts.size || 220, r = size/2 - (opts.pad||14), thickness = opts.thickness || 28;
+  const cx = size/2, cy = size/2;
+  const total = slices.reduce((s,x)=>s+x.value,0);
+  const C = 2*Math.PI*r;
+  let cum = 0, paths = '', labels = '';
+  slices.forEach(sl=>{
+    const frac = total>0 ? sl.value/total : 0;
+    if(frac<=0) return;
+    const dash = frac*C;
+    paths += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${sl.color}" stroke-width="${thickness}"
+      stroke-dasharray="${dash} ${C-dash}" stroke-dashoffset="${-cum}" transform="rotate(-90 ${cx} ${cy})"/>`;
+    const mid = (cum + dash/2)/C*2*Math.PI - Math.PI/2;
+    const lx = cx + r*Math.cos(mid), ly = cy + r*Math.sin(mid);
+    if(frac>0.035 && opts.showPct!==false){
+      labels += `<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle"
+        font-family="JetBrains Mono" font-weight="700" font-size="11.5" fill="#FFFFFF" style="paint-order:stroke;stroke:${sl.color};stroke-width:3px;">${(opts.labelFn?opts.labelFn(sl,frac):(frac*100).toFixed(0)+'%')}</text>`;
+    }
+    cum += dash;
+  });
+  let ticks='';
+  if(opts.capTicks){
+    for(let t=0;t<4;t++){
+      const ang = t*Math.PI/2 - Math.PI/2;
+      const x1 = cx + (r-thickness/2-3)*Math.cos(ang), y1 = cy + (r-thickness/2-3)*Math.sin(ang);
+      const x2 = cx + (r+thickness/2+3)*Math.cos(ang), y2 = cy + (r+thickness/2+3)*Math.sin(ang);
+      ticks += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#B9C2D0" stroke-width="1.5" stroke-dasharray="3 3"/>`;
+    }
+  }
+  const centerText = opts.centerLabel ? `<text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="middle"
+    font-family="Inter" font-size="11" fill="#8D96A6">${opts.centerLabel}</text>` : '';
+  return `<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}">${paths}${ticks}${labels}${centerText}</svg>`;
+}
+
+function renderCharts(cash){
+  const colorFor = i => PALETTE[i%PALETTE.length];
+
+  const costSlices = holdings.map((h,i)=>({label:h.ma, value:h.giaMua*h.sl, color:colorFor(i)}));
+  costSlices.push({label:'Tiền mặt', value:Math.max(cash,0), color:'#C4CCD8'});
+  document.getElementById('chartCost').innerHTML = costSlices.some(s=>s.value>0)
+    ? buildDonutSVG(costSlices, {capTicks:true, centerLabel:'Giá trị mua'})
+    : '<div class="empty-note">Chưa có dữ liệu</div>';
+  document.getElementById('legendCost').innerHTML = costSlices.map(s=>
+    `<span><span class="dot" style="background:${s.color}"></span>${s.label}</span>`).join('');
+
+  const curSlices = holdings.map((h,i)=>({label:h.ma, value:h.giaHt*h.sl, color:colorFor(i)}));
+  curSlices.push({label:'Tiền mặt', value:Math.max(cash,0), color:'#C4CCD8'});
+  document.getElementById('chartCurrent').innerHTML = curSlices.some(s=>s.value>0)
+    ? buildDonutSVG(curSlices, {capTicks:true, centerLabel:'Giá trị hiện tại'})
+    : '<div class="empty-note">Chưa có dữ liệu</div>';
+  document.getElementById('legendCurrent').innerHTML = curSlices.map(s=>
+    `<span><span class="dot" style="background:${s.color}"></span>${s.label}</span>`).join('');
+}
+
+/* ================= CHECKLIST (Có / Không + tính điểm) ================= */
+function renderChecklist(){
+  const box = document.getElementById('checklistBox');
+  box.innerHTML = CHECKLIST_ITEMS.map((txt,i)=>{
+    const st = checklistState[i];
+    return `<div class="chk-item">
+      <span class="chk-txt">${txt}</span>
+      <div class="chk-toggle">
+        <button class="chk-btn yes ${st==='yes'?'active':''}" data-i="${i}" data-v="yes">Có</button>
+        <button class="chk-btn no ${st==='no'?'active':''}" data-i="${i}" data-v="no">Không</button>
+      </div>
+    </div>`;
+  }).join('') + `<div class="chk-summary" id="chkSummary"></div>`;
+
+  box.querySelectorAll('.chk-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const i = +btn.dataset.i, v = btn.dataset.v;
+      checklistState[i] = (checklistState[i]===v) ? undefined : v;
+      if(checklistState[i]===undefined) delete checklistState[i];
+      renderChecklist();
+      saveState();
+    });
+  });
+  updateChkSummary();
+}
+function updateChkSummary(){
+  const el = document.getElementById('chkSummary');
+  if(!el) return;
+  const vals = Object.values(checklistState);
+  const answered = vals.filter(v=>v==='yes'||v==='no').length;
+  const yes = vals.filter(v=>v==='yes').length;
+  const pct = answered>0 ? yes/answered*100 : 0;
+  if(answered===0){
+    el.textContent = 'Chưa đánh giá tiêu chí nào — tick Có/Không cho từng dòng để app gợi ý.';
+    el.className = 'chk-summary';
+  } else if(pct>=50){
+    el.textContent = `${pct.toFixed(0)}% tiêu chí đạt "Có" (${yes}/${answered}) — nhiều tiêu chí tích cực, có thể cân nhắc MUA.`;
+    el.className = 'chk-summary good';
+  } else {
+    el.textContent = `${pct.toFixed(0)}% tiêu chí đạt "Có" (${yes}/${answered}) — dưới 50%, nên xem xét kỹ lại hoặc chuẩn bị bán/thận trọng.`;
+    el.className = 'chk-summary bad';
+  }
+}
+
+/* ================= TAB 1: hành động ================= */
+document.getElementById('btnAddRow').addEventListener('click',()=>{
+  holdings.push({ma:'', giaMua:0, giaHt:0, sl:0, ngayMua: todayStr(), ghiChu:''});
+  renderAll();
+});
+document.getElementById('btnPaste').addEventListener('click',()=>{
+  const txt = prompt('Dán bảng giá — mỗi dòng: MÃ  GIÁ (cách nhau bằng khoảng trắng, tab, hoặc dấu phẩy)\nVí dụ:\nHPG 23500\nVCB 92000');
+  if(!txt) return;
+  const lines = txt.split('\n').map(l=>l.trim()).filter(Boolean);
+  let matched=0;
+  lines.forEach(line=>{
+    const parts = line.split(/[\s,;\t]+/).filter(Boolean);
+    if(parts.length<2) return;
+    const ma = parts[0].toUpperCase();
+    const gia = Number(digitsOnly(parts[1]));
+    const h = holdings.find(x=>x.ma.toUpperCase()===ma);
+    if(h && gia>0){ h.giaHt = gia; matched++; }
+  });
+  alert(matched+' mã đã được cập nhật giá.');
+  renderAll();
+});
+
+/* ================= XUẤT / NHẬP EXCEL ================= */
+document.getElementById('btnExport').addEventListener('click',()=>{
+  const cap = readCapital();
+  const wsHoldings = holdings.map(h=>{
+    const c = calcRow(h);
+    return {
+      'Mã':h.ma,'Giá mua':h.giaMua,'Giá hiện tại':h.giaHt,'SL':h.sl,'Ngày mua':h.ngayMua,
+      'T+':c.tplus,'Giá trị mua':c.gtMua,'Giá trị hiện tại':c.gtHt,'% Lời lỗ':c.pct.toFixed(2),
+      'Tiền lời lỗ':c.lai,'Ghi chú':h.ghiChu||''
+    };
+  });
+  const wsCapital = [{ 'Vốn tự có':cap.nav,'Dùng margin':cap.marginOn?'Có':'Không','Tỉ lệ vay':cap.ratio,'Sức mua khả dụng':cap.buyPower }];
+  const wsChecklist = CHECKLIST_ITEMS.map((t,i)=>({'Tiêu chí':t,'Đánh giá': checklistState[i]==='yes'?'Có':(checklistState[i]==='no'?'Không':'')}));
+  const wsDca = [];
+  dcaPlans.forEach(p=>{
+    const r = calcDcaPlan(p);
+    r.tranches.forEach((tr,i)=>{
+      wsDca.push({'Mã':p.ma,'Lần':i+1,'Giá kích hoạt':Math.round(tr.price),'Ngày dự kiến':tr.date,
+        '% vốn':tr.weightPct.toFixed(1),'Số tiền':Math.round(tr.amount),'SL (lô 100)':tr.qty,
+        'Giá vốn BQ luỹ kế':Math.round(tr.avgCost)});
+    });
+  });
+
+  downloadWorkbook({
+    'Von': wsCapital,
+    'DanhMuc': wsHoldings,
+    'Checklist': wsChecklist,
+    ...(wsDca.length ? {'DCA': wsDca} : {})
+  }, `danh-muc-${todayStr()}.xls`);
+});
+
+document.getElementById('fileImport').addEventListener('change', e=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev=>{
+    let sheets;
+    try{ sheets = parseWorkbookXML(ev.target.result); }
+    catch(err){ alert('Không đọc được file. Hãy dùng file .xls do chính app này xuất ra.'); return; }
+
+    if(sheets['DanhMuc']){
+      holdings = sheets['DanhMuc'].filter(r=>r['Mã']).map(r=>({
+        ma: r['Mã']||'', giaMua:+r['Giá mua']||0, giaHt:+r['Giá hiện tại']||0, sl:+r['SL']||0,
+        ngayMua: r['Ngày mua'] || todayStr(), ghiChu: r['Ghi chú']||''
+      }));
+    }
+    if(sheets['Von'] && sheets['Von'][0]){
+      const r = sheets['Von'][0];
+      document.getElementById('capNav').value = groupVN(+r['Vốn tự có']||0);
+      document.getElementById('capMarginOn').checked = r['Dùng margin']==='Có';
+      document.getElementById('capMarginRatio').value = r['Tỉ lệ vay']||1;
+    }
+    if(sheets['Checklist']){
+      checklistState = {};
+      sheets['Checklist'].forEach((r,i)=>{
+        if(r['Đánh giá']==='Có') checklistState[i]='yes';
+        else if(r['Đánh giá']==='Không') checklistState[i]='no';
+      });
+      renderChecklist();
+    }
+    renderAll();
+    saveState();
+    alert('Đã nhập dữ liệu từ file.');
+  };
+  reader.readAsText(file);
+  e.target.value='';
+});
+
+/* ================= TAB 2: DCA ================= */
+const DCA_MONEY_FIELDS = ['giaDinhGia','giaHt','giaDay','giaChotLoi','giaCatLo'];
+
+function calcDcaPlan(p){
+  const n = Math.max(p.soLan,1);
+  const cap = readCapital();
+  const navRef = p.navRieng>0 ? p.navRieng : cap.nav;
+  const budget = navRef * (p.pctMax/100);
+  const priceTop = p.giaHt;
+  const priceBottom = p.giaDay;
+  const sumW = n*(n+1)/2;
+  const startDate = new Date();
+  const totalDays = Math.max(p.soThang,0)*30;
+
+  let cumAmount=0, cumQty=0;
+  const tranches=[];
+  for(let i=1;i<=n;i++){
+    const price = n===1 ? priceTop : priceTop - (i-1)/(n-1)*(priceTop-priceBottom);
+    const weightPct = i/sumW*100;
+    const rawAmount = budget * (i/sumW);
+    let qty = price>0 ? Math.round(rawAmount/price/100)*100 : 0;
+    if(qty<=0 && rawAmount>0 && price>0) qty = 100; // tối thiểu 1 lô nếu còn ngân sách
+    const amount = qty*price; // chi phí thực sau khi làm tròn lô
+    cumAmount += amount; cumQty += qty;
+    const dayOffset = n===1 ? 0 : Math.round((i-1)/(n-1)*totalDays);
+    const d = new Date(startDate); d.setDate(d.getDate()+dayOffset);
+    tranches.push({
+      price, weightPct, amount, qty,
+      date: d.toISOString().slice(0,10),
+      avgCost: cumQty>0 ? cumAmount/cumQty : 0,
+      dropPct: priceTop>0 ? (priceTop-price)/priceTop*100 : 0
+    });
+  }
+  const target = p.giaChotLoi>0 ? p.giaChotLoi : p.giaDinhGia;
+  const stop = p.giaCatLo>0 ? p.giaCatLo : p.giaDay;
+  const rr = (p.giaHt-stop)!==0 ? (target-p.giaHt)/(p.giaHt-stop) : 0;
+  const pctVsFairValue = p.giaDinhGia>0 ? (p.giaDinhGia-p.giaHt)/p.giaDinhGia*100 : 0;
+  const pctToBottom = p.giaHt>0 ? (p.giaHt-p.giaDay)/p.giaHt*100 : 0;
+
+  return {tranches, budget, rr, pctVsFairValue, pctToBottom,
+    finalAvgCost: tranches.length?tranches[tranches.length-1].avgCost:0,
+    totalSpent: cumAmount};
+}
+
+function dcaFieldRow(p, idx){
+  const money = (key,label,val) => `
+    <div class="field"><label>${label}</label>
+      <input type="text" inputmode="numeric" data-money="1" data-p="${idx}" data-k="${key}" value="${groupVN(val)}"></div>`;
+  const plain = (key,label,val,step=1) => `
+    <div class="field"><label>${label}</label>
+      <input type="number" step="${step}" data-p="${idx}" data-k="${key}" value="${val}"></div>`;
+  return `
+    <div class="dca-form">
+      ${money('giaDinhGia','Giá định giá (CTCK)',p.giaDinhGia)}
+      ${money('giaHt','Giá hiện tại',p.giaHt)}
+      ${money('giaDay','Giá đáy dự kiến',p.giaDay)}
+      ${money('giaChotLoi','Giá chốt lời mục tiêu',p.giaChotLoi)}
+      ${money('giaCatLo','Giá cắt lỗ',p.giaCatLo)}
+      ${plain('pctMax','% NAV tối đa cho mã này',p.pctMax,1)}
+      ${plain('soLan','Số lần DCA',p.soLan,1)}
+      ${plain('soThang','Gom mua trong (tháng)',p.soThang,1)}
+    </div>`;
+}
+
+function tranchesTableHTML(r){
+  return `<table style="min-width:0;">
+    <thead><tr><th>Lần</th><th>Giá kích hoạt</th><th>% giảm</th><th>Ngày dự kiến</th><th>% vốn</th><th>Số tiền</th><th>SL (lô 100)</th><th>Giá vốn BQ luỹ kế</th></tr></thead>
+    <tbody>
+      ${r.tranches.map((tr,i)=>`<tr>
+        <td class="num">${i+1}</td>
+        <td class="num">${fmt(tr.price)}</td>
+        <td class="num">${tr.dropPct.toFixed(1)}%</td>
+        <td class="num">${tr.date}</td>
+        <td class="num">${tr.weightPct.toFixed(1)}%</td>
+        <td class="num">${fmt(tr.amount)}</td>
+        <td class="num">${fmt(tr.qty)}</td>
+        <td class="num">${fmt(tr.avgCost)}</td>
+      </tr>`).join('')}
+    </tbody>
+  </table>`;
+}
+function statStripHTML(r){
+  return `
+    <div class="stat"><div class="l">Giảm so với định giá</div><div class="v">${fmtPct(r.pctVsFairValue)}</div></div>
+    <div class="stat"><div class="l">Còn có thể giảm tới đáy</div><div class="v">${r.pctToBottom.toFixed(1)}%</div></div>
+    <div class="stat"><div class="l">R:R (lãi/rủi ro)</div><div class="v ${r.rr>=2?'rr-good':'rr-bad'}">${r.rr.toFixed(2)} : 1</div></div>
+    <div class="stat"><div class="l">Ngân sách giải ngân</div><div class="v">${fmt(r.budget)} đ</div></div>
+    <div class="stat"><div class="l">Thực chi (sau làm tròn lô)</div><div class="v">${fmt(r.totalSpent)} đ</div></div>
+    <div class="stat"><div class="l">Giá vốn BQ dự kiến</div><div class="v">${fmt(r.finalAvgCost)} đ</div></div>
+  `;
+}
+
+function buildDcaList(){
+  const list = document.getElementById('dcaList');
+  const empty = document.getElementById('dcaEmpty');
+  list.innerHTML='';
+  empty.style.display = dcaPlans.length ? 'none':'block';
+
+  dcaPlans.forEach((p,idx)=>{
+    const div = document.createElement('div');
+    div.className='dca-item';
+    div.id = 'dca-'+idx;
+    div.innerHTML = `
+      <div class="dca-item-top">
+        <input class="code" data-p="${idx}" data-k="ma" value="${p.ma}" placeholder="MÃ CP" style="background:transparent;border:none;color:var(--ink);font-family:var(--font-display);font-size:17px;font-weight:600;width:160px;outline:none;border-bottom:1.5px dashed var(--line);">
+        <button class="rm-btn" data-rmdca="${idx}" style="font-size:17px;">✕</button>
+      </div>
+      ${dcaFieldRow(p, idx)}
+      <div class="stat-strip" data-stats></div>
+      <div class="table-scroll" style="margin-top:14px;" data-tranches></div>
+    `;
+    list.appendChild(div);
+  });
+
+  list.querySelectorAll('input[data-p]').forEach(el=>{
+    el.addEventListener('input', e=>{
+      const i = +el.dataset.p, k = el.dataset.k;
+      if(el.dataset.money){
+        dcaPlans[i][k] = liveFormatMoney(el);
+      } else if(k==='ma'){
+        dcaPlans[i][k] = el.value;
+      } else {
+        dcaPlans[i][k] = parseFloat(el.value)||0;
+      }
+      updateDcaComputed();
+      saveState();
+    });
+  });
+  list.querySelectorAll('[data-rmdca]').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      dcaPlans.splice(+e.target.dataset.rmdca,1);
+      buildDcaList();
+      saveState();
+    });
+  });
+
+  updateDcaComputed();
+}
+
+function updateDcaComputed(){
+  dcaPlans.forEach((p,idx)=>{
+    const div = document.getElementById('dca-'+idx);
+    if(!div) return;
+    const r = calcDcaPlan(p);
+    div.querySelector('[data-stats]').innerHTML = statStripHTML(r);
+    div.querySelector('[data-tranches]').innerHTML = tranchesTableHTML(r);
+  });
+}
+
+document.getElementById('btnAddDca').addEventListener('click',()=>{
+  dcaPlans.push({
+    ma:'', giaDinhGia:30000, giaHt:22000, giaDay:18000,
+    giaChotLoi:0, giaCatLo:0, pctMax:25, soLan:4, soThang:2, navRieng:0
+  });
+  buildDcaList();
+  saveState();
+});
+
+/* ================= CHUYỂN TAB ================= */
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+  });
+});
+
+/* ================= ô nhập vốn ================= */
+document.getElementById('capNav').addEventListener('input', e=>{ liveFormatMoney(e.target); updateComputed(); });
+document.getElementById('capMarginOn').addEventListener('change', updateComputed);
+document.getElementById('capMarginRatio').addEventListener('change', updateComputed);
+
+/* ================= khởi động ================= */
+function renderAll(){
+  renderTable();
+  buildDcaList();
+}
+(async function init(){
+  renderChecklist();
+  await loadState();
+  renderAll();
+})();
+</script>
+</body>
+</html>
