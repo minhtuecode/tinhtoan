@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Đoán Từ — Trán Kề Trán</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#170B2E;
+    --panel:#2B1550;
+    --panel-2:#35186A;
+    --cream:#FBF4E8;
+    --gold:#FFC94D;
+    --coral:#FF5D73;
+    --mint:#3FE1B0;
+    --violet:#8B6BFF;
+    --line: rgba(251,244,232,0.22);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{
+    margin:0; height:100%; overscroll-behavior:none;
+    background:var(--ink); color:var(--cream);
+    font-family:'Inter',sans-serif;
+    -webkit-user-select:none; user-select:none;
+  }
+  body{
+    display:flex; flex-direction:column;
+    min-height:100dvh;
+    background:
+      radial-gradient(circle at 15% -10%, rgba(139,107,255,0.35), transparent 55%),
+      radial-gradient(circle at 100% 10%, rgba(255,93,115,0.22), transparent 45%),
+      var(--ink);
+    overflow:hidden;
+  }
+  .screen{
+    flex:1; display:none; flex-direction:column;
+    height:100dvh; padding:max(20px, env(safe-area-inset-top)) 20px max(24px, env(safe-area-inset-bottom));
+    animation:fadein .35s ease;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior-y:contain;
+  }
+  .screen.active{display:flex;}
+  @keyframes fadein{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+
+  h1,h2,h3{font-family:'Baloo 2', sans-serif; margin:0;}
+
+  /* ---------- HOME ---------- */
+  .brand{text-align:center; margin:14px 0 6px;}
+  .brand .eyebrow{
+    font-size:12px; letter-spacing:.18em; text-transform:uppercase;
+    color:var(--gold); font-weight:700; opacity:.9;
+  }
+  .brand h1{
+    font-size:38px; font-weight:800; line-height:1.05; margin-top:6px;
+    background:linear-gradient(135deg, var(--cream), var(--gold));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .brand p{color:rgba(251,244,232,0.85); font-size:14px; margin-top:8px; line-height:1.5;}
+  .test-sound-btn{
+    margin-top:14px; padding:10px 18px; border-radius:100px; border:1.5px solid var(--gold);
+    background:rgba(255,201,77,0.12); color:var(--gold); font-family:'Baloo 2',sans-serif;
+    font-weight:700; font-size:13.5px; cursor:pointer;
+  }
+  .test-sound-btn:active{transform:scale(0.96);}
+  .sound-status{
+    margin-top:10px; font-size:12.5px; min-height:16px; color:rgba(251,244,232,0.75);
+  }
+  .sound-status.warn{color:var(--coral); font-weight:600;}
+  .sound-status.ok{color:var(--mint); font-weight:600;}
+
+  .section-label{
+    font-family:'Baloo 2',sans-serif; font-size:13px; letter-spacing:.08em;
+    text-transform:uppercase; color:rgba(251,244,232,0.8); margin:22px 2px 10px; font-weight:700;
+  }
+
+  .cat-grid{
+    display:grid; grid-template-columns:repeat(2,1fr); gap:12px;
+  }
+  .cat-card{
+    position:relative; border-radius:18px; padding:16px 14px;
+    background:var(--panel); border:1.5px solid var(--line);
+    text-align:left; cursor:pointer; overflow:hidden;
+    transition:transform .12s ease, border-color .12s ease;
+  }
+  .cat-card:active{transform:scale(0.96);}
+  .cat-card .emoji{font-size:26px; display:block; margin-bottom:8px;}
+  .cat-card .name{font-family:'Baloo 2',sans-serif; font-weight:700; font-size:16px;}
+  .cat-card .count{font-size:11px; color:rgba(251,244,232,0.72); margin-top:2px;}
+  .cat-card.selected{
+    border-color:var(--gold);
+    background:linear-gradient(145deg, var(--panel-2), var(--panel));
+    box-shadow:0 0 0 1px var(--gold) inset, 0 8px 24px -8px rgba(255,201,77,0.4);
+  }
+  .cat-card.selected::after{
+    content:"✓"; position:absolute; top:10px; right:12px;
+    width:20px; height:20px; border-radius:50%; background:var(--gold); color:var(--ink);
+    font-size:12px; font-weight:800; display:flex; align-items:center; justify-content:center;
+  }
+
+  .time-row{display:flex; gap:10px;}
+  .time-pill{
+    flex:1; padding:14px 0; text-align:center; border-radius:14px;
+    background:var(--panel); border:1.5px solid var(--line);
+    font-family:'Baloo 2',sans-serif; font-weight:700; font-size:16px;
+    cursor:pointer; transition:transform .12s ease;
+  }
+  .time-pill:active{transform:scale(0.94);}
+  .time-pill.selected{
+    background:linear-gradient(135deg, var(--violet), #6C4CE0);
+    border-color:var(--violet); color:#fff;
+  }
+  .time-pill span{display:block; font-size:10px; font-weight:500; opacity:.75; margin-top:2px;}
+
+  .start-btn{
+    margin-top:auto; padding-top:24px;
+  }
+  .btn-primary{
+    width:100%; padding:18px; border:none; border-radius:18px;
+    background:linear-gradient(135deg, var(--mint), #2BC79A);
+    color:#0B2A22; font-family:'Baloo 2',sans-serif; font-weight:800; font-size:19px;
+    cursor:pointer; box-shadow:0 10px 24px -8px rgba(63,225,176,0.5);
+    transition:transform .12s ease;
+  }
+  .btn-primary:active{transform:scale(0.97);}
+  .btn-primary:disabled{opacity:.4; box-shadow:none;}
+
+  .how-link{
+    text-align:center; margin-top:14px; font-size:13px; color:rgba(251,244,232,0.8);
+    text-decoration:underline; text-underline-offset:3px;
+  }
+
+  /* ---------- HOW TO ---------- */
+  .howto-box{background:var(--panel); border:1.5px solid var(--line); border-radius:18px; padding:18px; margin-top:16px;}
+  .howto-box h3{font-size:16px; margin-bottom:8px; color:var(--gold);}
+  .howto-box p{font-size:14px; line-height:1.6; color:rgba(251,244,232,0.8); margin:0 0 12px;}
+  .howto-box p:last-child{margin-bottom:0;}
+  .back-link{align-self:flex-start; color:var(--gold); font-size:14px; font-weight:600; margin-bottom:4px; cursor:pointer;}
+
+  /* ---------- ADD CATEGORY CARD ---------- */
+  .cat-card.add-card{
+    display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;
+    background:transparent; border:1.5px dashed rgba(251,244,232,0.28);
+  }
+  .cat-card.add-card .emoji{font-size:22px; margin-bottom:6px;}
+  .cat-card.add-card .name{color:rgba(251,244,232,0.88); font-size:14px;}
+  .cat-card .del-x{
+    position:absolute; top:8px; right:8px; width:22px; height:22px; border-radius:50%;
+    background:rgba(0,0,0,0.35); color:rgba(251,244,232,0.8); border:none;
+    font-size:13px; line-height:22px; text-align:center; padding:0; cursor:pointer;
+  }
+  .custom-badge{
+    position:absolute; top:8px; left:12px; font-size:9px; letter-spacing:.05em; text-transform:uppercase;
+    color:var(--violet); font-weight:800; background:rgba(139,107,255,0.16); padding:2px 6px; border-radius:100px;
+  }
+
+  /* ---------- CUSTOM CATEGORY SCREEN ---------- */
+  #screen-custom{overflow-y:auto;}
+  .prompt-box{
+    background:var(--panel); border:1.5px solid var(--line); border-radius:16px; padding:16px; margin-top:14px;
+  }
+  .prompt-box h3{font-size:14px; color:var(--gold); margin-bottom:8px;}
+  .prompt-box p.hint{font-size:12.5px; color:rgba(251,244,232,0.82); line-height:1.5; margin:0 0 10px;}
+  .prompt-text{
+    background:rgba(0,0,0,0.28); border-radius:12px; padding:12px 14px; font-size:13px;
+    line-height:1.6; color:rgba(251,244,232,0.92); white-space:pre-wrap; font-family:'Inter',sans-serif;
+    max-height:140px; overflow-y:auto; border:1px solid var(--line);
+  }
+  .copy-btn{
+    margin-top:10px; width:100%; padding:12px; border-radius:12px; border:1.5px solid var(--gold);
+    background:rgba(255,201,77,0.1); color:var(--gold); font-family:'Baloo 2',sans-serif; font-weight:700;
+    font-size:14px; cursor:pointer;
+  }
+  .copy-btn.copied{background:var(--gold); color:var(--ink);}
+
+  .field-label{
+    font-size:12.5px; font-weight:700; color:rgba(251,244,232,0.85); margin:16px 2px 6px;
+  }
+  .field-row{display:flex; gap:10px;}
+  input.text-input, textarea.text-input{
+    width:100%; background:var(--panel); border:1.5px solid var(--line); border-radius:14px;
+    padding:14px; color:var(--cream); font-family:'Inter',sans-serif; font-size:15px; outline:none;
+  }
+  input.text-input:focus, textarea.text-input:focus{border-color:var(--violet);}
+  input.emoji-input{width:66px; text-align:center; font-size:22px; flex:none;}
+  textarea.text-input{min-height:120px; resize:vertical; line-height:1.5; font-size:14px;}
+  .parse-hint{font-size:12px; color:rgba(251,244,232,0.72); margin-top:6px;}
+  .parse-hint b{color:var(--mint);}
+
+  .existing-custom{margin-top:22px;}
+  .existing-row{
+    display:flex; align-items:center; justify-content:space-between;
+    background:var(--panel); border-radius:12px; padding:12px 14px; margin-bottom:8px;
+  }
+  .existing-row .info{display:flex; align-items:center; gap:10px; font-size:14px; font-weight:600;}
+  .existing-row .del{background:none; border:none; color:var(--coral); font-size:13px; font-weight:700; cursor:pointer;}
+
+  /* ---------- COUNTDOWN ---------- */
+  #screen-countdown{align-items:center; justify-content:center; text-align:center;}
+  .cd-topic{font-family:'Baloo 2',sans-serif; font-size:15px; color:var(--gold); letter-spacing:.05em; text-transform:uppercase; margin-bottom:10px;}
+  .cd-number{font-family:'Baloo 2',sans-serif; font-size:120px; font-weight:800; line-height:1;}
+  .cd-sub{font-size:14px; color:rgba(251,244,232,0.82); margin-top:14px;}
+
+  /* ---------- GAME ---------- */
+  #screen-game{
+    padding:0; position:relative; transition:background .18s ease;
+    background:var(--ink);
+  }
+  .game-top{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:max(16px, env(safe-area-inset-top)) 18px 8px;
+  }
+  .timer-chip{
+    font-family:'Baloo 2',sans-serif; font-weight:700; font-size:20px;
+    background:rgba(0,0,0,0.25); padding:6px 16px; border-radius:100px;
+    min-width:74px; text-align:center;
+  }
+  .timer-chip.low{color:var(--coral);}
+  .score-chip{
+    display:flex; gap:10px; font-family:'Baloo 2',sans-serif; font-weight:700; font-size:15px;
+  }
+  .score-chip .ok{color:var(--mint);}
+  .score-chip .no{color:var(--coral);}
+  .quit-btn{
+    background:none; border:none; color:rgba(251,244,232,0.85); font-size:22px; padding:4px 8px; cursor:pointer;
+  }
+  .game-top-right{display:flex; align-items:center; gap:10px;}
+  .sound-toggle{
+    background:rgba(0,0,0,0.25); border:1.5px solid var(--line); border-radius:100px;
+    width:38px; height:38px; font-size:16px; display:flex; align-items:center; justify-content:center;
+    color:var(--cream); cursor:pointer; padding:0;
+  }
+  .sound-toggle.small{width:32px; height:32px; font-size:14px; background:rgba(0,0,0,0.22);}
+  .sound-toggle.muted{opacity:.5;}
+  #screen-home .sound-toggle{position:absolute; top:max(20px, env(safe-area-inset-top)); right:20px; z-index:2;}
+  #screen-home{position:relative;}
+
+  .word-stage{
+    flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:20px; text-align:center; position:relative;
+  }
+  .word-text{
+    font-family:'Baloo 2',sans-serif; font-weight:800; font-size:clamp(38px, 11vw, 64px);
+    line-height:1.05; word-break:break-word; max-width:100%;
+    text-shadow: 0 3px 14px rgba(0,0,0,0.45);
+  }
+  .tilt-hint{
+    position:absolute; bottom:14px; left:0; right:0; text-align:center;
+    font-size:12px; color:rgba(251,244,232,0.78);
+  }
+
+  .game-controls{
+    display:flex; gap:12px; padding:14px 18px max(18px, env(safe-area-inset-bottom));
+  }
+  .ctrl-btn{
+    flex:1; border:none; border-radius:20px; padding:20px 0;
+    font-family:'Baloo 2',sans-serif; font-weight:800; font-size:17px;
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+    cursor:pointer; transition:transform .1s ease;
+  }
+  .ctrl-btn:active{transform:scale(0.95);}
+  .ctrl-btn .icon{font-size:24px;}
+  .ctrl-skip{background:var(--panel-2); color:var(--coral); border:1.5px solid rgba(255,93,115,0.35);}
+  .ctrl-correct{background:linear-gradient(135deg, var(--mint), #2BC79A); color:#0B2A22;}
+
+  .calib-strip{
+    text-align:center; padding:6px 18px 0; font-size:12px; color:rgba(251,244,232,0.78);
+  }
+  .calib-strip button{
+    background:none; border:none; color:var(--gold); font-weight:700; font-size:12px; text-decoration:underline; cursor:pointer;
+  }
+
+  /* ---------- RESULTS ---------- */
+  #screen-result{align-items:stretch;}
+  .result-hero{text-align:center; margin:10px 0 6px;}
+  .result-hero .big-score{
+    font-family:'Baloo 2',sans-serif; font-weight:800; font-size:56px;
+    background:linear-gradient(135deg, var(--gold), var(--mint));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .result-hero .label{color:rgba(251,244,232,0.82); font-size:13px; margin-top:2px;}
+  .result-topic{text-align:center; font-size:13px; color:var(--gold); margin-top:4px; font-weight:600;}
+
+  .result-list{flex:1; overflow-y:auto; margin-top:18px; -webkit-overflow-scrolling:touch;}
+  .result-row{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:12px 14px; background:var(--panel); border-radius:12px; margin-bottom:8px;
+    border-left:4px solid var(--mint);
+  }
+  .result-row.wrong{border-left-color:var(--coral);}
+  .result-row .w{font-weight:600; font-size:15px;}
+  .result-row .tag{font-size:16px;}
+
+  .result-actions{display:flex; gap:10px; padding-top:16px;}
+  .btn-secondary{
+    flex:1; padding:16px; border-radius:16px; border:1.5px solid var(--line);
+    background:var(--panel); color:var(--cream); font-family:'Baloo 2',sans-serif;
+    font-weight:700; font-size:15px; cursor:pointer;
+  }
+  .btn-secondary:active{transform:scale(0.97);}
+
+  .flash-correct{background:linear-gradient(160deg, #1a5c46, #0d3a2c) !important;}
+  .flash-wrong{background:linear-gradient(160deg, #6e1f2e, #3c0f19) !important;}
+</style>
+</head>
+<body>
+
+<!-- ============ HOME ============ -->
+<div class="screen active" id="screen-home">
+  <button class="sound-toggle" id="soundToggleHome">🔊</button>
+  <div class="brand">
+    <div class="eyebrow">Trò chơi trán kề trán</div>
+    <h1>Đoán Từ</h1>
+    <p>Đặt điện thoại lên trán, người đối diện diễn tả từ. Đúng thì dập điện thoại xuống, sai thì gạt lên — hoặc dùng nút bên dưới.</p>
+    <button class="test-sound-btn" id="testSoundBtn">🔔 Bấm để thử âm thanh</button>
+    <div class="sound-status" id="soundStatus"></div>
+  </div>
+
+  <div class="section-label">Chọn chủ đề</div>
+  <div class="cat-grid" id="catGrid"></div>
+
+  <div class="section-label">Thời gian mỗi lượt</div>
+  <div class="time-row" id="timeRow">
+    <div class="time-pill" data-t="60">1 phút</div>
+    <div class="time-pill selected" data-t="120">2 phút</div>
+    <div class="time-pill" data-t="180">3 phút</div>
+    <div class="time-pill" data-t="300">5 phút</div>
+  </div>
+
+  <div class="start-btn">
+    <button class="btn-primary" id="startBtn" disabled>Bắt đầu chơi</button>
+    <div class="how-link" id="howLink">Cách chơi &amp; hiệu chỉnh cảm biến</div>
+  </div>
+</div>
+
+<!-- ============ CUSTOM CATEGORY ============ -->
+<div class="screen" id="screen-custom">
+  <div class="back-link" id="backFromCustom">‹ Quay lại</div>
+  <h1 style="font-size:22px; margin-top:6px;">Thêm chủ đề của bạn</h1>
+  <p style="font-size:13px; color:rgba(251,244,232,0.82); margin-top:6px; line-height:1.5;">Nhờ ChatGPT, Gemini hoặc Claude tạo giúp danh sách từ, sau đó dán vào ô bên dưới.</p>
+
+  <div class="prompt-box">
+    <h3>📋 Prompt mẫu để hỏi AI</h3>
+    <p class="hint">Sao chép prompt này, thay phần [CHỦ ĐỀ] rồi dán vào ChatGPT / Gemini / Claude để lấy danh sách từ.</p>
+    <div class="prompt-text" id="promptText">Hãy tạo cho tôi một danh sách 30 từ hoặc cụm từ ngắn (tối đa 3-4 chữ) bằng tiếng Việt thuộc chủ đề: [CHỦ ĐỀ CỦA BẠN, ví dụ: Kinh tế học IGCSE].
+
+Yêu cầu:
+- Mỗi từ/cụm từ trên một dòng riêng, không đánh số thứ tự, không gạch đầu dòng, không giải thích thêm.
+- Là danh từ hoặc cụm từ cụ thể, dễ diễn tả bằng hành động hoặc lời nói (phù hợp trò chơi đoán từ kiểu Heads Up).
+- Độ khó vừa phải, không quá học thuật, không trùng lặp.
+- Chỉ trả về đúng danh sách từ, không thêm tiêu đề hay lời dẫn.</div>
+    <button class="copy-btn" id="copyPromptBtn">Sao chép prompt</button>
+  </div>
+
+  <div class="field-label">Tên chủ đề</div>
+  <input type="text" class="text-input" id="newCatName" placeholder="Ví dụ: Kinh tế học IGCSE" maxlength="30">
+
+  <div class="field-label">Biểu tượng (emoji, không bắt buộc)</div>
+  <div class="field-row">
+    <input type="text" class="text-input emoji-input" id="newCatEmoji" placeholder="📚" maxlength="4">
+  </div>
+
+  <div class="field-label">Dán danh sách từ vào đây</div>
+  <textarea class="text-input" id="newCatWords" placeholder="Dán từ ChatGPT/Gemini/Claude vào đây — mỗi từ một dòng, hoặc cách nhau bằng dấu phẩy đều được."></textarea>
+  <div class="parse-hint">Đã nhận diện: <b id="parseCount">0</b> từ</div>
+
+  <button class="btn-primary" id="saveCatBtn" style="margin-top:18px;" disabled>Lưu chủ đề</button>
+
+  <div class="existing-custom" id="existingCustomWrap" style="display:none;">
+    <div class="section-label">Chủ đề đã tạo</div>
+    <div id="existingCustomList"></div>
+  </div>
+</div>
+
+<!-- ============ HOW TO ============ -->
+<div class="screen" id="screen-howto">
+  <div class="back-link" id="backFromHow">‹ Quay lại</div>
+  <h1 style="font-size:24px; margin-top:6px;">Cách chơi</h1>
+  <div class="howto-box">
+    <h3>🎯 Luật chơi</h3>
+    <p>Một người cầm điện thoại áp vào trán, màn hình quay ra ngoài cho người khác nhìn thấy từ. Người đó mô tả từ bằng lời (không nói trùng chữ trong từ), người cầm máy phải đoán đúng.</p>
+    <p>Đoán đúng → dập/nghiêng điện thoại xuống dưới. Bỏ qua/không đoán được → nghiêng điện thoại lên trên. Nếu điện thoại không có cảm biến ổn định, dùng 2 nút "Đúng" / "Bỏ qua" ngay trên màn hình.</p>
+    <h3>📱 Cảm biến nghiêng</h3>
+    <p>Trong 1-2 giây đầu ván chơi, hãy giữ điện thoại thẳng, đứng yên áp vào trán để app hiệu chỉnh góc gốc — dòng chữ nhỏ phía trên 2 nút bấm sẽ báo "Đã hiệu chỉnh ✓" khi xong. Trên iPhone, trình duyệt sẽ hỏi quyền truy cập cảm biến chuyển động ngay khi bấm "Bắt đầu chơi" — nhớ chọn "Cho phép" (Allow).</p>
+    <p>Nếu dòng chữ báo "⚠️ Không nhận được cảm biến", nghĩa là trình duyệt đang chặn quyền truy cập cảm biến (thường gặp khi mở trong khung xem trước/app nhúng). Cách khắc phục: tải file này về điện thoại rồi <b>mở trực tiếp bằng Safari hoặc Chrome</b> (không mở trong app xem trước) — cảm biến sẽ hoạt động đầy đủ.</p>
+    <p>Dù cảm biến hoạt động hay không, 2 nút "Đúng" / "Bỏ qua" luôn dùng được ngay trên màn hình chơi — trải nghiệm vẫn mượt như thường.</p>
+    <h3>🔊 Không nghe thấy âm thanh?</h3>
+    <p>Bấm nút <b>"Bấm để thử âm thanh"</b> ở màn hình chính — nếu báo ✅ mà vẫn im lặng, 99% là do <b>nút gạt chuông im lặng</b> ở cạnh trái iPhone đang bật (gạt về phía hiện màu cam), hoặc âm lượng chuông/media đang tắt. Hãy gạt nút đó về phía màn hình và tăng âm lượng bằng nút bên hông máy.</p>
+    <p>Nếu nút thử báo ⚠️ (bị chặn), nghĩa là khung xem trước đang chặn phát âm — giống trường hợp cảm biến, hãy mở file bằng link chia sẻ trực tiếp trong Safari để nghe đầy đủ.</p>
+  </div>
+</div>
+
+<!-- ============ COUNTDOWN ============ -->
+<div class="screen" id="screen-countdown">
+  <div class="cd-topic" id="cdTopic">Chủ đề</div>
+  <div class="cd-number" id="cdNumber">3</div>
+  <div class="cd-sub">Áp điện thoại lên trán, quay màn hình ra ngoài</div>
+</div>
+
+<!-- ============ GAME ============ -->
+<div class="screen" id="screen-game">
+  <div class="game-top">
+    <button class="quit-btn" id="quitBtn">✕</button>
+    <div class="timer-chip" id="timerChip">2:00</div>
+    <div class="game-top-right">
+      <div class="score-chip"><span class="ok" id="okCount">0</span><span style="opacity:.4">/</span><span class="no" id="noCount">0</span></div>
+      <button class="sound-toggle small" id="soundToggleGame">🔊</button>
+    </div>
+  </div>
+  <div class="word-stage">
+    <div class="word-text" id="wordText">Từ</div>
+    <div class="tilt-hint" id="tiltHint">Nghiêng xuống = Đúng · Nghiêng lên = Bỏ qua</div>
+  </div>
+  <div class="calib-strip"><span id="tiltStatus">Đang kiểm tra cảm biến…</span> · <button id="calibBtn">Hiệu chỉnh lại</button></div>
+  <div class="game-controls">
+    <button class="ctrl-btn ctrl-skip" id="skipBtn"><span class="icon">↑</span>Bỏ qua</button>
+    <button class="ctrl-btn ctrl-correct" id="correctBtn"><span class="icon">↓</span>Đúng</button>
+  </div>
+</div>
+
+<!-- ============ RESULT ============ -->
+<div class="screen" id="screen-result">
+  <div class="result-hero">
+    <div class="big-score" id="bigScore">0</div>
+    <div class="label">từ đoán đúng</div>
+    <div class="result-topic" id="resultTopic"></div>
+  </div>
+  <div class="result-list" id="resultList"></div>
+  <div class="result-actions">
+    <button class="btn-secondary" id="playAgainBtn">Chơi lại</button>
+    <button class="btn-primary" id="newGameBtn" style="flex:1;">Chủ đề khác</button>
+  </div>
+</div>
+
+<script>
+/* ================= DATA ================= */
+const CATEGORIES = {
+  amnhac: { name:"Âm nhạc", emoji:"🎵", words:["Guitar","Piano","Ca sĩ","Micro","Bản nhạc","Dàn hợp xướng","Trống","Violin","Nhạc rock","Nhạc trẻ","DJ","Sáo trúc","Karaoke","Nốt nhạc","Ban nhạc","Bài hát","Nhạc cụ","Sân khấu","Concert","Beat","Lời bài hát","Nhạc sĩ","Đàn bầu","Nhịp điệu","Vũ đạo","Thu âm","Tai nghe","MV ca nhạc","Rap","Bolero"] },
+  cuocsong: { name:"Cuộc sống", emoji:"🏠", words:["Đi chợ","Nấu ăn","Dọn nhà","Đi làm","Ngủ trưa","Đón con","Họp lớp","Cắt tóc","Đổ rác","Sạc điện thoại","Đi bộ","Rửa bát","Xem tivi","Đọc báo","Tưới cây","Trả tiền điện","Giặt đồ","Đi chợ tết","Sinh nhật","Đám cưới","Về quê","Đi học","Làm bài tập","Uống cà phê","Đi siêu thị","Xếp hàng","Sạc pin","Họp gia đình","Ăn sáng","Đi ngủ"] },
+  hoaqua: { name:"Hoa quả", emoji:"🍉", words:["Xoài","Chuối","Dưa hấu","Táo","Cam","Nho","Dứa","Đu đủ","Sầu riêng","Mít","Ổi","Bưởi","Chôm chôm","Măng cụt","Vải thiều","Nhãn","Thanh long","Dâu tây","Kiwi","Lê","Mận","Đào","Vú sữa","Me","Roi","Quýt","Chanh dây","Dừa","Sơ ri","Bơ"] },
+  dongvat: { name:"Động vật", emoji:"🐼", words:["Con voi","Con hổ","Con gấu trúc","Con cá sấu","Con khỉ","Con rùa","Con cú","Con sư tử","Con hươu cao cổ","Con cáo","Con sóc","Con dơi","Con công","Con ngựa vằn","Con cừu","Con vịt","Con ếch","Con bướm","Con ong","Con nhện","Con rắn","Con thỏ","Con mèo","Con chó","Con gà","Con lợn","Con cá voi","Con cá heo","Con chim cánh cụt","Con đại bàng"] },
+  ngheduong: { name:"Nghề nghiệp", emoji:"👩‍⚕️", words:["Bác sĩ","Giáo viên","Kỹ sư","Đầu bếp","Ca sĩ","Diễn viên","Phi công","Cảnh sát","Lính cứu hỏa","Luật sư","Nông dân","Thợ may","Kiến trúc sư","Nhà báo","Hướng dẫn viên","Nha sĩ","Thợ điện","Vận động viên","Họa sĩ","Lập trình viên","Kế toán","Ca dao","Thợ mộc","Nhiếp ảnh gia","Tiếp viên hàng không","Bảo vệ","Thủ thư","Nhà văn","Người mẫu","Đầu bếp bánh"] },
+  phimanh: { name:"Phim ảnh", emoji:"🎬", words:["Đạo diễn","Diễn viên","Kịch bản","Rạp chiếu phim","Bắp rang bơ","Poster phim","Cảnh hành động","Phim hoạt hình","Phim kinh dị","Phim tình cảm","Giải Oscar","Hậu trường","Phụ đề","Trailer","Nam chính","Nữ chính","Vai phản diện","Phim hài","Phim cổ trang","Diễn xuất","Máy quay","Đóng phim","Kỹ xảo","Biên kịch","Phòng vé","Phim siêu anh hùng","Song ngữ","Phim tài liệu","Ánh sáng trường quay","Casting"] },
+  diadanh: { name:"Địa danh", emoji:"🗺️", words:["Hà Nội","Sài Gòn","Đà Lạt","Vịnh Hạ Long","Hội An","Nha Trang","Sa Pa","Phú Quốc","Huế","Đà Nẵng","Tháp Eiffel","Vạn Lý Trường Thành","Kim tự tháp","Tượng Nữ thần Tự do","Núi Phú Sĩ","Rừng Amazon","Sông Mê Kông","Chùa Một Cột","Cầu Rồng","Động Phong Nha","Thác Bản Giốc","Bãi biển Mỹ Khê","Đảo Cát Bà","Cao nguyên đá Đồng Văn","Chợ Bến Thành","Nhà thờ Đức Bà","Hồ Gươm","Bãi Cháy","Mũi Né","Cù Lao Chàm"] },
+  doan: { name:"Đồ ăn", emoji:"🍜", words:["Phở","Bún chả","Bánh mì","Cơm tấm","Gỏi cuốn","Bánh xèo","Nem rán","Bún bò Huế","Hủ tiếu","Chả giò","Xôi","Bánh cuốn","Lẩu","Cháo","Bánh chưng","Sushi","Pizza","Mì Ý","Hamburger","Kem","Chè","Trà sữa","Bánh flan","Bánh tráng trộn","Ốc","Gà rán","Salad","Sinh tố","Bò kho","Cà ri"] },
+  thethao: { name:"Thể thao", emoji:"⚽", words:["Bóng đá","Bóng rổ","Cầu lông","Bơi lội","Chạy bộ","Đua xe","Quần vợt","Bóng chuyền","Bóng bàn","Võ thuật","Golf","Trượt ván","Nhảy dây","Leo núi","Đấu vật","Boxing","Yoga","Gym","Bóng chày","Trượt tuyết","Đá cầu","Cờ vua","Bắn cung","Thể dục dụng cụ","Marathon","Đạp xe","Lướt sóng","Nhảy cao","Kéo co","Cử tạ"] },
+  dovat: { name:"Đồ vật", emoji:"🧸", words:["Cái ô","Cái gương","Đồng hồ","Chìa khóa","Cái ghế","Cái bàn","Cái quạt","Bàn chải đánh răng","Cái kéo","Cái ví","Cái mũ","Cái balo","Cái kính","Cái ly","Bóng đèn","Cái chăn","Cái gối","Sách vở","Bút chì","Cái tủ lạnh","Máy giặt","Cái nồi","Cái chảo","Điều khiển tivi","Sạc dự phòng","Cái thang","Cái xô","Đôi dép","Cái balo","Cái ô tô đồ chơi"] }
+};
+
+/* ================= SOUND ENGINE (synthesized, no external audio files) ================= */
+let audioCtx = null;
+let beatTimer = null;
+let beatStep = 0;
+let beatUrgent = false;
+
+function ensureAudio(){
+  if(!audioCtx){
+    try{ audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    catch(e){ return; }
+  }
+  if(audioCtx.state === 'suspended'){
+    audioCtx.resume().catch(()=>{});
+  }
+}
+
+function tone(freq, startOffset, dur, type, peak){
+  if(!soundState.on || !audioCtx) return;
+  const t = audioCtx.currentTime + startOffset;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, t);
+  gain.gain.setValueAtTime(0.0001, t);
+  gain.gain.linearRampToValueAtTime(peak, t + 0.012);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  osc.connect(gain).connect(audioCtx.destination);
+  osc.start(t);
+  osc.stop(t + dur + 0.03);
+}
+function thump(startOffset, peak){
+  if(!soundState.on || !audioCtx) return;
+  const t = audioCtx.currentTime + startOffset;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(120, t);
+  osc.frequency.exponentialRampToValueAtTime(45, t + 0.14);
+  gain.gain.setValueAtTime(peak, t);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+  osc.connect(gain).connect(audioCtx.destination);
+  osc.start(t);
+  osc.stop(t + 0.2);
+}
+
+const soundState = { on: (localStorage.getItem('doanTuSoundOn') !== 'off') };
+
+function playCorrect(){
+  ensureAudio();
+  tone(784, 0, 0.11, 'triangle', 0.28);
+  tone(1175, 0.09, 0.2, 'triangle', 0.3);
+}
+function playWrong(){
+  ensureAudio();
+  tone(200, 0, 0.16, 'sawtooth', 0.22);
+  tone(140, 0.1, 0.24, 'sawtooth', 0.22);
+}
+function playTick(urgent){
+  ensureAudio();
+  tone(urgent?1500:950, 0, 0.05, 'square', urgent?0.16:0.1);
+}
+function playCountBeep(){
+  ensureAudio();
+  tone(660, 0, 0.14, 'sine', 0.26);
+}
+function playGo(){
+  ensureAudio();
+  tone(523, 0, 0.09, 'sine', 0.3);
+  tone(659, 0.08, 0.09, 'sine', 0.3);
+  tone(880, 0.16, 0.24, 'sine', 0.36);
+}
+function playTimeUp(){
+  ensureAudio();
+  tone(320, 0, 0.22, 'sawtooth', 0.28);
+  tone(220, 0.18, 0.3, 'sawtooth', 0.28);
+  tone(140, 0.38, 0.5, 'sawtooth', 0.3);
+}
+
+function startBeat(urgent){
+  stopBeat();
+  if(!soundState.on) return;
+  beatUrgent = !!urgent;
+  const bpm = urgent ? 168 : 104;
+  const stepMs = 60000 / bpm / 2;
+  beatStep = 0;
+  beatTimer = setInterval(()=>{
+    ensureAudio();
+    if(beatStep % 2 === 0){ thump(0, urgent?0.22:0.14); }
+    else { tone(4200, 0, 0.02, 'square', urgent?0.05:0.025); }
+    beatStep++;
+  }, stepMs);
+}
+function stopBeat(){
+  if(beatTimer){ clearInterval(beatTimer); beatTimer=null; }
+}
+function setSoundUI(){
+  const icon = soundState.on ? '🔊' : '🔇';
+  $('soundToggleHome').textContent = icon;
+  $('soundToggleGame').textContent = icon;
+  $('soundToggleHome').classList.toggle('muted', !soundState.on);
+  $('soundToggleGame').classList.toggle('muted', !soundState.on);
+}
+function toggleSound(){
+  soundState.on = !soundState.on;
+  localStorage.setItem('doanTuSoundOn', soundState.on ? 'on' : 'off');
+  setSoundUI();
+  if(!soundState.on){ stopBeat(); } else if(beatTimer===null && document.getElementById('screen-game').classList.contains('active')){ startBeat(beatUrgent); }
+  else { ensureAudio(); }
+}
+
+/* ================= STATE ================= */
+let state = {
+  category: null,
+  duration: 120,
+  words: [],
+  wordIndex: 0,
+  timeLeft: 120,
+  timerInterval: null,
+  results: [], // {word, correct}
+  baselineBeta: null,
+  baselineSamples: [],
+  tiltLocked: false,
+  usingTilt: false,
+  tiltEventCount: 0,
+  tiltSupportChecked: false
+};
+
+const $ = id => document.getElementById(id);
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  $(id).classList.add('active');
+}
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+/* ================= CUSTOM CATEGORIES (localStorage) ================= */
+const CUSTOM_KEY = 'doanTuCustomCategories';
+function loadCustomCategories(){
+  try{
+    return JSON.parse(localStorage.getItem(CUSTOM_KEY)) || {};
+  }catch(e){ return {}; }
+}
+function saveCustomCategories(obj){
+  localStorage.setItem(CUSTOM_KEY, JSON.stringify(obj));
+}
+function mergeCustomIntoCategories(){
+  const custom = loadCustomCategories();
+  Object.entries(custom).forEach(([id,cat])=>{
+    CATEGORIES[id] = { name:cat.name, emoji:cat.emoji||'📝', words:cat.words, isCustom:true };
+  });
+}
+
+/* ================= HOME SCREEN ================= */
+const catGrid = $('catGrid');
+function renderCatGrid(){
+  catGrid.innerHTML = '';
+  Object.entries(CATEGORIES).forEach(([key,cat])=>{
+    const card = document.createElement('div');
+    card.className='cat-card' + (state.category===key ? ' selected':'');
+    card.dataset.key=key;
+    card.style.position='relative';
+    card.innerHTML = `${cat.isCustom?'<span class="custom-badge">Của bạn</span>':''}<span class="emoji">${cat.emoji}</span><span class="name">${cat.name}</span><span class="count">${cat.words.length} từ</span>${cat.isCustom?'<button class="del-x" data-del="'+key+'">✕</button>':''}`;
+    card.addEventListener('click', (e)=>{
+      if(e.target.closest('.del-x')) return;
+      document.querySelectorAll('.cat-card').forEach(c=>c.classList.remove('selected'));
+      card.classList.add('selected');
+      state.category = key;
+      $('startBtn').disabled = false;
+    });
+    catGrid.appendChild(card);
+  });
+  // delete handlers
+  catGrid.querySelectorAll('.del-x').forEach(btn=>{
+    btn.addEventListener('click',(e)=>{
+      e.stopPropagation();
+      const id = btn.dataset.del;
+      if(confirm('Xoá chủ đề "'+CATEGORIES[id].name+'"?')){
+        delete CATEGORIES[id];
+        const custom = loadCustomCategories();
+        delete custom[id];
+        saveCustomCategories(custom);
+        if(state.category===id){ state.category=null; $('startBtn').disabled=true; }
+        renderCatGrid();
+      }
+    });
+  });
+  // add-card
+  const addCard = document.createElement('div');
+  addCard.className='cat-card add-card';
+  addCard.innerHTML = `<span class="emoji">➕</span><span class="name">Thêm chủ đề</span>`;
+  addCard.addEventListener('click', ()=>{ openCustomScreen(); });
+  catGrid.appendChild(addCard);
+}
+mergeCustomIntoCategories();
+renderCatGrid();
+
+document.querySelectorAll('.time-pill').forEach(pill=>{
+  pill.addEventListener('click', ()=>{
+    document.querySelectorAll('.time-pill').forEach(p=>p.classList.remove('selected'));
+    pill.classList.add('selected');
+    state.duration = parseInt(pill.dataset.t,10);
+  });
+});
+
+$('howLink').addEventListener('click', ()=>showScreen('screen-howto'));
+$('backFromHow').addEventListener('click', ()=>showScreen('screen-home'));
+
+/* ================= CUSTOM CATEGORY SCREEN LOGIC ================= */
+function openCustomScreen(){
+  $('newCatName').value='';
+  $('newCatEmoji').value='';
+  $('newCatWords').value='';
+  $('parseCount').textContent='0';
+  $('saveCatBtn').disabled = true;
+  renderExistingCustomList();
+  showScreen('screen-custom');
+}
+$('backFromCustom').addEventListener('click', ()=>{ renderCatGrid(); showScreen('screen-home'); });
+
+function parseWordsFromText(text){
+  return text
+    .split(/[\n,;]+/)
+    .map(w => w.replace(/^\s*[-•*\d]+[\.\)]?\s*/,'').trim())
+    .filter(w => w.length>0)
+    .filter((w,i,arr)=>arr.findIndex(x=>x.toLowerCase()===w.toLowerCase())===i);
+}
+function updateParsePreview(){
+  const words = parseWordsFromText($('newCatWords').value);
+  $('parseCount').textContent = words.length;
+  const nameOk = $('newCatName').value.trim().length>0;
+  $('saveCatBtn').disabled = !(nameOk && words.length>=8);
+  return words;
+}
+$('newCatWords').addEventListener('input', updateParsePreview);
+$('newCatName').addEventListener('input', updateParsePreview);
+
+$('saveCatBtn').addEventListener('click', ()=>{
+  const name = $('newCatName').value.trim();
+  const emoji = $('newCatEmoji').value.trim() || '📝';
+  const words = parseWordsFromText($('newCatWords').value);
+  if(!name || words.length<8) return;
+  const id = 'custom_' + Date.now();
+  const custom = loadCustomCategories();
+  custom[id] = { name, emoji, words };
+  saveCustomCategories(custom);
+  CATEGORIES[id] = { name, emoji, words, isCustom:true };
+  state.category = id;
+  renderCatGrid();
+  showScreen('screen-home');
+  document.querySelector(`.cat-card[data-key="${id}"]`)?.scrollIntoView({behavior:'smooth', block:'center'});
+});
+
+function renderExistingCustomList(){
+  const custom = loadCustomCategories();
+  const wrap = $('existingCustomWrap');
+  const list = $('existingCustomList');
+  list.innerHTML='';
+  const entries = Object.entries(custom);
+  if(entries.length===0){ wrap.style.display='none'; return; }
+  wrap.style.display='block';
+  entries.forEach(([id,cat])=>{
+    const row = document.createElement('div');
+    row.className='existing-row';
+    row.innerHTML = `<span class="info">${cat.emoji||'📝'} ${cat.name} <span style="opacity:.5; font-weight:400;">(${cat.words.length} từ)</span></span><button class="del">Xoá</button>`;
+    row.querySelector('.del').addEventListener('click', ()=>{
+      if(confirm('Xoá chủ đề "'+cat.name+'"?')){
+        delete custom[id];
+        saveCustomCategories(custom);
+        delete CATEGORIES[id];
+        if(state.category===id){ state.category=null; }
+        renderExistingCustomList();
+      }
+    });
+    list.appendChild(row);
+  });
+}
+
+$('copyPromptBtn').addEventListener('click', async ()=>{
+  const text = $('promptText').textContent;
+  const btn = $('copyPromptBtn');
+  try{
+    await navigator.clipboard.writeText(text);
+  }catch(e){
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); }catch(err){}
+    document.body.removeChild(ta);
+  }
+  btn.textContent = 'Đã sao chép ✓';
+  btn.classList.add('copied');
+  setTimeout(()=>{ btn.textContent='Sao chép prompt'; btn.classList.remove('copied'); }, 1800);
+});
+
+$('soundToggleHome').addEventListener('click', toggleSound);
+$('soundToggleGame').addEventListener('click', toggleSound);
+setSoundUI();
+
+$('testSoundBtn').addEventListener('click', ()=>{
+  const statusEl = $('soundStatus');
+  statusEl.className = 'sound-status';
+  statusEl.textContent = '';
+  if(!soundState.on){
+    soundState.on = true;
+    localStorage.setItem('doanTuSoundOn','on');
+    setSoundUI();
+  }
+  ensureAudio();
+  if(!audioCtx){
+    statusEl.textContent = '⚠️ Trình duyệt này không hỗ trợ phát âm thanh.';
+    statusEl.className = 'sound-status warn';
+    return;
+  }
+  playGo();
+  setTimeout(()=>{
+    if(audioCtx.state === 'running'){
+      statusEl.textContent = '✅ Đã phát! Nếu vẫn không nghe thấy: kiểm tra chuông im lặng (nút gạt cạnh máy) và âm lượng chuông/media.';
+      statusEl.className = 'sound-status ok';
+    } else {
+      statusEl.textContent = '⚠️ Trình duyệt đang chặn âm thanh ở đây. Hãy dùng link chia sẻ mở trực tiếp trong Safari (xem mục "Cách chơi").';
+      statusEl.className = 'sound-status warn';
+    }
+  }, 350);
+});
+
+$('startBtn').addEventListener('click', async ()=>{
+  if(!state.category) return;
+  ensureAudio();
+  // request motion permission on iOS if needed
+  if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function'){
+    try{
+      const res = await DeviceOrientationEvent.requestPermission();
+      state.usingTilt = (res === 'granted');
+    }catch(e){ state.usingTilt = false; }
+  } else if (typeof DeviceOrientationEvent !== 'undefined'){
+    state.usingTilt = true;
+  } else {
+    state.usingTilt = false;
+  }
+  startCountdown();
+});
+
+/* ================= COUNTDOWN ================= */
+function startCountdown(){
+  $('cdTopic').textContent = CATEGORIES[state.category].emoji + '  ' + CATEGORIES[state.category].name;
+  showScreen('screen-countdown');
+  let n = 3;
+  $('cdNumber').textContent = n;
+  playCountBeep();
+  const iv = setInterval(()=>{
+    n--;
+    if(n<=0){
+      clearInterval(iv);
+      playGo();
+      startGame();
+    } else {
+      $('cdNumber').textContent = n;
+      playCountBeep();
+    }
+  },800);
+}
+
+/* ================= GAME ================= */
+function startGame(){
+  state.words = shuffle(CATEGORIES[state.category].words);
+  state.wordIndex = 0;
+  state.timeLeft = state.duration;
+  state.results = [];
+  state.baselineBeta = null;
+  state.baselineSamples = [];
+  state.tiltLocked = false;
+  state.tiltEventCount = 0;
+
+  showScreen('screen-game');
+  updateWordDisplay();
+  updateScoreChips();
+  updateTimerChip();
+  startBeat(state.timeLeft<=10);
+
+  state.timerInterval = setInterval(()=>{
+    state.timeLeft--;
+    updateTimerChip();
+    if(state.timeLeft === 10){
+      startBeat(true); // ramp up tempo for the final stretch
+    }
+    if(state.timeLeft<=10 && state.timeLeft>0){
+      playTick(true);
+    }
+    if(state.timeLeft<=0){
+      playTimeUp();
+      endGame();
+    }
+  },1000);
+
+  if(state.usingTilt){
+    $('tiltStatus').textContent = 'Đang chờ dữ liệu cảm biến…';
+    window.addEventListener('deviceorientation', onTilt);
+    // If no orientation event arrives shortly, the browser/preview is blocking sensor access.
+    setTimeout(()=>{
+      if(state.tiltEventCount === 0){
+        $('tiltStatus').textContent = '⚠️ Không nhận được cảm biến — dùng 2 nút bên dưới';
+        $('tiltHint').textContent = 'Cảm biến không khả dụng ở đây — hãy dùng 2 nút bên dưới';
+      }
+    }, 1800);
+  } else {
+    $('tiltStatus').textContent = 'Cảm biến chưa bật — dùng 2 nút bên dưới';
+    $('tiltHint').textContent = 'Dùng 2 nút bên dưới để chấm điểm';
+  }
+}
+
+function updateWordDisplay(){
+  if(state.wordIndex >= state.words.length){
+    // reshuffle if we somehow run out
+    state.words = state.words.concat(shuffle(CATEGORIES[state.category].words));
+  }
+  $('wordText').textContent = state.words[state.wordIndex];
+}
+function updateScoreChips(){
+  const ok = state.results.filter(r=>r.correct).length;
+  const no = state.results.filter(r=>!r.correct).length;
+  $('okCount').textContent = ok;
+  $('noCount').textContent = no;
+}
+function updateTimerChip(){
+  const m = Math.floor(state.timeLeft/60);
+  const s = state.timeLeft%60;
+  $('timerChip').textContent = `${m}:${s.toString().padStart(2,'0')}`;
+  $('timerChip').classList.toggle('low', state.timeLeft<=10);
+}
+
+function flash(cls){
+  const g = $('screen-game');
+  g.classList.add(cls);
+  if(navigator.vibrate) navigator.vibrate(cls==='flash-correct'?40:[20,40,20]);
+  setTimeout(()=>g.classList.remove(cls), 260);
+}
+
+function registerAnswer(correct){
+  if(state.timeLeft<=0) return;
+  state.results.push({word: state.words[state.wordIndex], correct});
+  flash(correct?'flash-correct':'flash-wrong');
+  correct ? playCorrect() : playWrong();
+  state.wordIndex++;
+  updateWordDisplay();
+  updateScoreChips();
+}
+
+$('correctBtn').addEventListener('click', ()=>registerAnswer(true));
+$('skipBtn').addEventListener('click', ()=>registerAnswer(false));
+$('quitBtn').addEventListener('click', ()=>{
+  if(confirm('Kết thúc lượt chơi này?')) endGame();
+});
+$('calibBtn').addEventListener('click', ()=>{
+  state.baselineBeta = null; // will re-capture from fresh samples on next orientation events
+  state.baselineSamples = [];
+  if(state.usingTilt) $('tiltStatus').textContent = 'Đang hiệu chỉnh…';
+});
+
+const TILT_THRESH = 20;      // degrees of tilt from baseline needed to trigger
+const CALIB_SAMPLES = 6;     // readings averaged to set the baseline angle
+
+function onTilt(e){
+  if(e.beta === null || e.beta === undefined) return;
+  state.tiltEventCount++;
+
+  // Phase 1: still calibrating baseline — collect a few samples and average them
+  if(state.baselineBeta === null){
+    state.baselineSamples.push(e.beta);
+    if(state.baselineSamples.length >= CALIB_SAMPLES){
+      const sum = state.baselineSamples.reduce((a,b)=>a+b,0);
+      state.baselineBeta = sum / state.baselineSamples.length;
+      $('tiltStatus').textContent = 'Đã hiệu chỉnh ✓ — nghiêng để chấm điểm';
+    } else {
+      $('tiltStatus').textContent = 'Đang hiệu chỉnh… giữ thẳng điện thoại';
+    }
+    return;
+  }
+
+  if(state.tiltLocked) return;
+  const delta = e.beta - state.baselineBeta;
+
+  // live feedback so it's obvious the sensor is working
+  $('tiltStatus').textContent = `Cảm biến hoạt động · nghiêng ${Math.round(delta)}°`;
+
+  if(delta > TILT_THRESH){
+    state.tiltLocked = true;
+    registerAnswer(false); // tilted up -> skip
+    setTimeout(()=>{ state.tiltLocked=false; state.baselineBeta=null; state.baselineSamples=[]; }, 700);
+  } else if(delta < -TILT_THRESH){
+    state.tiltLocked = true;
+    registerAnswer(true); // tilted down -> correct
+    setTimeout(()=>{ state.tiltLocked=false; state.baselineBeta=null; state.baselineSamples=[]; }, 700);
+  }
+}
+
+function endGame(){
+  clearInterval(state.timerInterval);
+  window.removeEventListener('deviceorientation', onTilt);
+  stopBeat();
+  showResult();
+}
+
+/* ================= RESULT ================= */
+function showResult(){
+  const ok = state.results.filter(r=>r.correct).length;
+  $('bigScore').textContent = ok;
+  $('resultTopic').textContent = CATEGORIES[state.category].emoji + ' ' + CATEGORIES[state.category].name;
+  const list = $('resultList');
+  list.innerHTML='';
+  state.results.forEach(r=>{
+    const row = document.createElement('div');
+    row.className = 'result-row' + (r.correct?'':' wrong');
+    row.innerHTML = `<span class="w">${r.word}</span><span class="tag">${r.correct?'✅':'⏭️'}</span>`;
+    list.appendChild(row);
+  });
+  if(state.results.length===0){
+    list.innerHTML = '<div style="text-align:center; color:rgba(251,244,232,0.75); padding-top:30px;">Chưa có từ nào được đoán.</div>';
+  }
+  showScreen('screen-result');
+}
+
+$('playAgainBtn').addEventListener('click', ()=>{ startCountdown(); });
+$('newGameBtn').addEventListener('click', ()=>{ showScreen('screen-home'); });
+
+</script>
+</body>
+</html>
