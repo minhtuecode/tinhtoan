@@ -174,6 +174,13 @@ tbody textarea{resize:vertical;font-family:var(--font-body);font-size:12.5px;min
 .legend-row span.dot{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px;}
 
 /* ---------- checklist ---------- */
+.chk-ma-row{display:flex;align-items:flex-end;gap:12px;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--line-soft);}
+.chk-ma-row input{background:var(--bg);border:1px solid var(--line);color:var(--ink);font-family:var(--font-mono);font-size:13.5px;padding:8px 10px;border-radius:7px;outline:none;width:100%;}
+.chk-ma-row input:focus{border-color:var(--accent);background:var(--panel);}
+.method-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+.method-tab{font-family:var(--font-mono);font-size:12px;padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:var(--bg);color:var(--ink-dim);cursor:pointer;transition:.15s;}
+.method-tab.active{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600;}
+.method-cap{font-size:11.5px;color:var(--ink-faint);margin:-8px 0 14px;font-family:var(--font-mono);}
 .checklist{display:flex;flex-direction:column;}
 .chk-item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px dashed var(--line-soft);font-size:12.8px;color:var(--ink);}
 .chk-item .chk-txt{flex:1;}
@@ -315,6 +322,16 @@ tbody textarea{resize:vertical;font-family:var(--font-body);font-size:12.5px;min
       <div><span class="eyebrow">Trước khi bấm lệnh</span><h2>Checklist chọn cổ phiếu</h2></div>
     </div>
     <div class="card">
+      <div class="cap" style="margin-bottom:12px;">Chọn trường phái phù hợp với mã đang xem — mỗi trường phái đánh giá độc lập, không trộn tiêu chí với nhau</div>
+      <div class="method-tabs" id="methodTabs"></div>
+      <div class="chk-ma-row">
+        <div class="field" style="max-width:200px;">
+          <label>Mã đang đánh giá</label>
+          <input list="chkHoldingsList" id="chkMaInput" placeholder="VD: HPG" style="text-transform:uppercase;">
+          <datalist id="chkHoldingsList"></datalist>
+        </div>
+        <button class="btn" id="chkClearBtn">🗑 Xoá đánh giá cho mã này</button>
+      </div>
       <div class="checklist" id="checklistBox"></div>
     </div>
   </div>
@@ -392,24 +409,47 @@ let holdings = [
   {ma:'HPG', giaMua:22000, giaHt:23500, sl:10000, ngayMua: todayStr(), ghiChu:'Mua khi chạm MA20 hỗ trợ cứng, vol tăng'},
 ];
 let dcaPlans = [];
-let checklistState = {}; // {index: 'yes'|'no'}
+let checklistState = {}; // { value:{ 'HPG':{0:'yes',...}, 'VCB':{...} }, canslim:{...}, fourm:{...}, growth:{...} }
+let activeChecklistKey = 'value';
 
-const CHECKLIST_ITEMS = [
-  'Đã tạo đỉnh trung/dài hạn chưa?',
-  'P/E, P/B thị trường & của cổ đã đủ rẻ chưa?',
-  'Biên an toàn so với định giá CTCK > 20-30-50%?',
-  'Lợi nhuận quý/năm gần nhất tăng hay giảm?',
-  'Có game / câu chuyện tăng trưởng nào không?',
-  'Khối ngoại & tự doanh đang mua hay bán ròng?',
-  'Nội bộ có đăng ký mua/bán cổ phiếu không?',
-  'Có dự án mới sắp bán / ghi nhận doanh thu?',
-  'Tồn kho có đang ở vùng giá rẻ không?',
-  'Vốn hoá nhỏ nhưng lợi nhuận mang lại cao (BLN tốt)?',
-  'DN có vị thế độc quyền / rào cản gia nhập ngành lớn?',
-  'Ban lãnh đạo tập trung sản xuất hay "đánh đấm" thổi giá?',
-  'Tiền mặt ròng / cổ phiếu có rẻ hơn thị giá không?',
-  'Vùng giá đã chiết khấu 25-30% từ đỉnh, có vùng đệm an toàn?',
-];
+const CHECKLIST_SETS = {
+  value: { label:'Value (Giá trị)', items:[
+    'P/E và P/B hiện tại thấp hơn trung bình ngành và trung bình lịch sử của chính DN?',
+    'Giá mua có biên an toàn ≥20-30% so với định giá hợp lý của các CTCK?',
+    'Tỷ lệ Nợ vay/Vốn chủ sở hữu ở mức an toàn, khả năng trả lãi vay tốt?',
+    'Lợi nhuận ổn định hoặc tăng đều qua nhiều năm, không có năm lỗ bất thường?',
+    'ROE duy trì ở mức tốt (>15%) và ổn định qua các năm?',
+    'Dòng tiền kinh doanh (CFO) dương, đủ trang trải hoạt động, không phụ thuộc vay nợ?',
+    'Doanh nghiệp trả cổ tức đều đặn hoặc có khả năng chi trả cổ tức bền vững?',
+    'Ban lãnh đạo minh bạch, báo cáo tài chính không có dấu hiệu bất thường/thao túng?',
+    'Giá đã chiết khấu đáng kể (25-30%+) từ đỉnh nhưng nền tảng kinh doanh không xấu đi?',
+  ]},
+  canslim: { label:'CANSLIM', items:[
+    'EPS quý gần nhất tăng mạnh (≥25%) so với cùng kỳ năm trước? (C)',
+    'Lợi nhuận tăng trưởng kép ổn định ≥25%/năm trong 3 năm gần nhất? (A)',
+    'Có yếu tố "mới": sản phẩm mới, ban lãnh đạo mới, hoặc giá đang lập đỉnh 52 tuần mới? (N)',
+    'Khối lượng giao dịch tăng đột biến khi giá tăng, xác nhận dòng tiền lớn vào? (S)',
+    'Cổ phiếu dẫn đầu nhóm ngành, tăng mạnh hơn các mã cùng ngành? (L)',
+    'Tổ chức/quỹ lớn hoặc khối ngoại đang gia tăng tỷ lệ sở hữu? (I)',
+    'Xu hướng thị trường chung (VN-Index) đang trong sóng tăng, không phải downtrend? (M)',
+  ]},
+  fourm: { label:'4M (Lợi thế cạnh tranh)', items:[
+    'Hiểu rõ mô hình kinh doanh và cách doanh nghiệp tạo ra lợi nhuận? (Meaning)',
+    'Doanh nghiệp có lợi thế cạnh tranh bền vững — rào cản gia nhập lớn (thương hiệu, chi phí thấp, độc quyền, mạng lưới, chi phí chuyển đổi cao)? (Moat)',
+    'Biên lợi nhuận và ROIC duy trì cao, ổn định qua nhiều năm — chứng tỏ lợi thế cạnh tranh là thật? (Moat)',
+    'Ban lãnh đạo có năng lực và chính trực, tái đầu tư vốn hiệu quả (ROIC > chi phí vốn)? (Management)',
+    'Ban lãnh đạo/cổ đông nội bộ sở hữu tỷ lệ cổ phần đáng kể, lợi ích gắn với cổ đông nhỏ lẻ? (Management)',
+    'Giá mua hiện tại thấp hơn đáng kể so với giá trị nội tại ước tính (biên an toàn đủ lớn)? (Margin of Safety)',
+  ]},
+  growth: { label:'Growth (Tăng trưởng)', items:[
+    'Tốc độ tăng trưởng doanh thu/lợi nhuận dự phóng cao hơn rõ rệt trung bình ngành?',
+    'Dư địa thị trường (TAM) còn lớn, doanh nghiệp chưa chiếm phần lớn thị phần?',
+    'Biên lợi nhuận có xu hướng cải thiện khi quy mô doanh nghiệp mở rộng?',
+    'Định giá theo PEG (P/E chia tốc độ tăng trưởng EPS) vẫn ở mức hợp lý, chưa quá đắt?',
+    'Doanh nghiệp có khả năng tái đầu tư dòng tiền vào các dự án tăng trưởng hiệu suất cao?',
+    'Có chất xúc tác tăng trưởng rõ ràng sắp hiện thực hoá (dự án mới, mở rộng thị trường, sản phẩm mới)?',
+  ]},
+};
 
 /* ================= LƯU TỰ ĐỘNG (window.storage nếu có, fallback localStorage) ================= */
 const STORAGE_KEY = 'danh-muc-portfolio-v1';
@@ -569,6 +609,7 @@ function updateComputed(){
   renderCapital();
   renderAlerts(totalForWeight, cash, cap);
   renderCharts(cash);
+  refreshChkHoldingsList();
   saveState();
 }
 
@@ -661,11 +702,62 @@ function renderCharts(cash){
     `<span><span class="dot" style="background:${s.color}"></span>${s.label}</span>`).join('');
 }
 
-/* ================= CHECKLIST (Có / Không + tính điểm) ================= */
+/* ================= CHECKLIST (theo trường phái + theo từng mã, Có / Không) ================= */
+function getChkMa(){
+  const el = document.getElementById('chkMaInput');
+  return (el.value||'').trim().toUpperCase();
+}
+function getChkState(){
+  // checklistState[method][MA] = {itemIndex: 'yes'|'no'}
+  const ma = getChkMa() || '(chung)';
+  if(!checklistState[activeChecklistKey]) checklistState[activeChecklistKey] = {};
+  if(!checklistState[activeChecklistKey][ma]) checklistState[activeChecklistKey][ma] = {};
+  return checklistState[activeChecklistKey][ma];
+}
+function refreshChkHoldingsList(){
+  const dl = document.getElementById('chkHoldingsList');
+  if(!dl) return;
+  dl.innerHTML = holdings.filter(h=>h.ma).map(h=>`<option value="${h.ma}">`).join('');
+}
+
+function renderMethodTabs(){
+  const tabs = document.getElementById('methodTabs');
+  tabs.innerHTML = Object.entries(CHECKLIST_SETS).map(([key,set])=>
+    `<button class="method-tab ${key===activeChecklistKey?'active':''}" data-key="${key}">${set.label}</button>`
+  ).join('');
+  tabs.querySelectorAll('.method-tab').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      activeChecklistKey = btn.dataset.key;
+      renderMethodTabs();
+      renderChecklist();
+    });
+  });
+}
+
 function renderChecklist(){
+  refreshChkHoldingsList();
+  const maInput = document.getElementById('chkMaInput');
+  if(maInput && !maInput.dataset.bound){
+    maInput.dataset.bound = '1';
+    maInput.addEventListener('input', ()=>{ renderChecklist(); saveState(); });
+  }
+  const clearBtn = document.getElementById('chkClearBtn');
+  if(clearBtn && !clearBtn.dataset.bound){
+    clearBtn.dataset.bound = '1';
+    clearBtn.addEventListener('click', ()=>{
+      const ma = getChkMa() || '(chung)';
+      if(checklistState[activeChecklistKey]) delete checklistState[activeChecklistKey][ma];
+      renderChecklist();
+      saveState();
+    });
+  }
+
   const box = document.getElementById('checklistBox');
-  box.innerHTML = CHECKLIST_ITEMS.map((txt,i)=>{
-    const st = checklistState[i];
+  const set = CHECKLIST_SETS[activeChecklistKey];
+  const state = getChkState();
+
+  box.innerHTML = set.items.map((txt,i)=>{
+    const st = state[i];
     return `<div class="chk-item">
       <span class="chk-txt">${txt}</span>
       <div class="chk-toggle">
@@ -678,8 +770,9 @@ function renderChecklist(){
   box.querySelectorAll('.chk-btn').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       const i = +btn.dataset.i, v = btn.dataset.v;
-      checklistState[i] = (checklistState[i]===v) ? undefined : v;
-      if(checklistState[i]===undefined) delete checklistState[i];
+      const st = getChkState();
+      st[i] = (st[i]===v) ? undefined : v;
+      if(st[i]===undefined) delete st[i];
       renderChecklist();
       saveState();
     });
@@ -689,18 +782,22 @@ function renderChecklist(){
 function updateChkSummary(){
   const el = document.getElementById('chkSummary');
   if(!el) return;
-  const vals = Object.values(checklistState);
+  const set = CHECKLIST_SETS[activeChecklistKey];
+  const ma = getChkMa();
+  const state = getChkState();
+  const vals = Object.values(state);
   const answered = vals.filter(v=>v==='yes'||v==='no').length;
   const yes = vals.filter(v=>v==='yes').length;
   const pct = answered>0 ? yes/answered*100 : 0;
+  const maLabel = ma ? `mã ${ma}` : 'mã chưa đặt tên';
   if(answered===0){
-    el.textContent = 'Chưa đánh giá tiêu chí nào — tick Có/Không cho từng dòng để app gợi ý.';
+    el.textContent = `Chưa đánh giá tiêu chí nào cho ${maLabel} theo ${set.label} — tick Có/Không cho từng dòng.`;
     el.className = 'chk-summary';
   } else if(pct>=50){
-    el.textContent = `${pct.toFixed(0)}% tiêu chí đạt "Có" (${yes}/${answered}) — nhiều tiêu chí tích cực, có thể cân nhắc MUA.`;
+    el.textContent = `${set.label} (${maLabel}): ${pct.toFixed(0)}% tiêu chí đạt "Có" (${yes}/${answered}) — nhiều tiêu chí tích cực, có thể cân nhắc MUA theo trường phái này.`;
     el.className = 'chk-summary good';
   } else {
-    el.textContent = `${pct.toFixed(0)}% tiêu chí đạt "Có" (${yes}/${answered}) — dưới 50%, nên xem xét kỹ lại hoặc chuẩn bị bán/thận trọng.`;
+    el.textContent = `${set.label} (${maLabel}): ${pct.toFixed(0)}% tiêu chí đạt "Có" (${yes}/${answered}) — dưới 50%, nên xem xét kỹ lại hoặc chuẩn bị bán/thận trọng.`;
     el.className = 'chk-summary bad';
   }
 }
@@ -739,7 +836,17 @@ document.getElementById('btnExport').addEventListener('click',()=>{
     };
   });
   const wsCapital = [{ 'Vốn tự có':cap.nav,'Dùng margin':cap.marginOn?'Có':'Không','Tỉ lệ vay':cap.ratio,'Sức mua khả dụng':cap.buyPower }];
-  const wsChecklist = CHECKLIST_ITEMS.map((t,i)=>({'Tiêu chí':t,'Đánh giá': checklistState[i]==='yes'?'Có':(checklistState[i]==='no'?'Không':'')}));
+  const wsChecklist = [];
+  Object.entries(CHECKLIST_SETS).forEach(([key,set])=>{
+    const byMa = checklistState[key] || {};
+    Object.entries(byMa).forEach(([ma,state])=>{
+      set.items.forEach((t,i)=>{
+        if(state[i]==='yes' || state[i]==='no'){
+          wsChecklist.push({'Trường phái':set.label,'Mã':ma,'Tiêu chí':t,'Đánh giá': state[i]==='yes'?'Có':'Không'});
+        }
+      });
+    });
+  });
   const wsDca = [];
   dcaPlans.forEach(p=>{
     const r = calcDcaPlan(p);
@@ -781,9 +888,19 @@ document.getElementById('fileImport').addEventListener('change', e=>{
     }
     if(sheets['Checklist']){
       checklistState = {};
-      sheets['Checklist'].forEach((r,i)=>{
-        if(r['Đánh giá']==='Có') checklistState[i]='yes';
-        else if(r['Đánh giá']==='Không') checklistState[i]='no';
+      const labelToKey = {};
+      Object.entries(CHECKLIST_SETS).forEach(([key,set])=>{ labelToKey[set.label]=key; });
+      sheets['Checklist'].forEach(r=>{
+        const key = labelToKey[r['Trường phái']];
+        if(!key) return;
+        const set = CHECKLIST_SETS[key];
+        const i = set.items.indexOf(r['Tiêu chí']);
+        if(i<0) return;
+        const ma = r['Mã'] || '(chung)';
+        if(!checklistState[key]) checklistState[key]={};
+        if(!checklistState[key][ma]) checklistState[key][ma]={};
+        if(r['Đánh giá']==='Có') checklistState[key][ma][i]='yes';
+        else if(r['Đánh giá']==='Không') checklistState[key][ma][i]='no';
       });
       renderChecklist();
     }
@@ -796,47 +913,138 @@ document.getElementById('fileImport').addEventListener('change', e=>{
 });
 
 /* ================= TAB 2: DCA ================= */
-const DCA_MONEY_FIELDS = ['giaDinhGia','giaHt','giaDay','giaChotLoi','giaCatLo'];
+const DCA_MONEY_FIELDS = ['giaDinhGia','giaHt','giaDay','giaCatLo','giaBinhQuanMongMuon','giaBanMongMuon'];
 
-function calcDcaPlan(p){
-  const n = Math.max(p.soLan,1);
+// Sinh danh sách lần mua theo công thức "kim tự tháp ngược" (mua nhiều hơn khi giá càng rẻ)
+function genTranches(p, n){
   const cap = readCapital();
   const navRef = p.navRieng>0 ? p.navRieng : cap.nav;
   const budget = navRef * (p.pctMax/100);
-  const priceTop = p.giaHt;
-  const priceBottom = p.giaDay;
+  const priceTop = p.giaHt, priceBottom = p.giaDay;
   const sumW = n*(n+1)/2;
-  const startDate = new Date();
-  const totalDays = Math.max(p.soThang,0)*30;
-
-  let cumAmount=0, cumQty=0;
-  const tranches=[];
+  const out = [];
   for(let i=1;i<=n;i++){
     const price = n===1 ? priceTop : priceTop - (i-1)/(n-1)*(priceTop-priceBottom);
-    const weightPct = i/sumW*100;
-    const rawAmount = budget * (i/sumW);
-    let qty = price>0 ? Math.round(rawAmount/price/100)*100 : 0;
-    if(qty<=0 && rawAmount>0 && price>0) qty = 100; // tối thiểu 1 lô nếu còn ngân sách
-    const amount = qty*price; // chi phí thực sau khi làm tròn lô
+    out.push({ price: Math.round(price), amount: Math.round(budget*(i/sumW)) });
+  }
+  return out;
+}
+
+// Ghép các lần mua (giá + số tiền, có thể do người dùng tự sửa) thành bảng đầy đủ + giá vốn BQ luỹ kế
+function calcFromTranches(p, rawTranches){
+  const startDate = new Date();
+  const totalDays = Math.max(p.soThang,0)*30;
+  const n = Math.max(rawTranches.length,1);
+  let cumAmount=0, cumQty=0;
+  const totalAmountPlanned = rawTranches.reduce((s,t)=>s+(t.amount||0),0) || 1;
+  const tranches = rawTranches.map((t,idx)=>{
+    const price = t.price||0;
+    let qty = price>0 ? Math.round((t.amount||0)/price/100)*100 : 0;
+    if(qty<=0 && t.amount>0 && price>0) qty = 100;
+    const amount = qty*price;
     cumAmount += amount; cumQty += qty;
-    const dayOffset = n===1 ? 0 : Math.round((i-1)/(n-1)*totalDays);
+    const dayOffset = n===1 ? 0 : Math.round(idx/(n-1)*totalDays);
     const d = new Date(startDate); d.setDate(d.getDate()+dayOffset);
-    tranches.push({
-      price, weightPct, amount, qty,
+    return {
+      price, qty, amount,
+      weightPct: (t.amount||0)/totalAmountPlanned*100,
       date: d.toISOString().slice(0,10),
       avgCost: cumQty>0 ? cumAmount/cumQty : 0,
-      dropPct: priceTop>0 ? (priceTop-price)/priceTop*100 : 0
-    });
+      dropPct: p.giaHt>0 ? (p.giaHt-price)/p.giaHt*100 : 0
+    };
+  });
+  return {
+    tranches,
+    totalSpent: cumAmount,
+    totalQty: cumQty,
+    finalAvgCost: tranches.length ? tranches[tranches.length-1].avgCost : 0
+  };
+}
+
+// Giải trực tiếp: cho n lần mua theo thang giá tuyến tính (từ giá hiện tại đến giá đáy),
+// tìm số tiền mỗi lần sao cho giá bình quân theo số lượng cổ khớp sát nhất với mục tiêu.
+function tranchePricesLinear(p, n){
+  const top = p.giaHt, bottom = p.giaDay;
+  const prices = [];
+  for(let idx=0; idx<n; idx++){
+    prices.push(n===1 ? top : top-(idx/(n-1))*(top-bottom));
   }
-  const target = p.giaChotLoi>0 ? p.giaChotLoi : p.giaDinhGia;
+  return prices;
+}
+// weight_i = (i+1)^k — k âm dồn tiền vào giá cao (đầu), k dương dồn tiền vào giá thấp (cuối)
+function avgCostForK(prices, k, budget){
+  const weights = prices.map((_,idx)=>Math.pow(idx+1, k));
+  const sumW = weights.reduce((a,b)=>a+b, 0);
+  let cumAmount=0, cumQty=0;
+  prices.forEach((price,idx)=>{
+    const amount = budget*(weights[idx]/sumW);
+    const qty = price>0 ? amount/price : 0;
+    cumAmount += amount; cumQty += qty;
+  });
+  return { avg: cumQty>0 ? cumAmount/cumQty : 0, weights, sumW };
+}
+function solveTranchesForTarget(p, n){
+  const cap = readCapital();
+  const navRef = p.navRieng>0 ? p.navRieng : cap.nav;
+  const budget = navRef*(p.pctMax/100);
+  const prices = tranchePricesLinear(p, n);
+  const target = p.giaBinhQuanMongMuon;
+
+  if(n<2 || prices[0]===prices[prices.length-1]){
+    const amt = budget/n;
+    return { tranches: prices.map(price=>({price:Math.round(price), amount:Math.round(amt)})), achieved:prices[0], ok:false };
+  }
+
+  let lo=-25, hi=25;
+  const loRes = avgCostForK(prices, lo, budget); // k rất âm -> dồn vào giá cao nhất
+  const hiRes = avgCostForK(prices, hi, budget); // k rất dương -> dồn vào giá thấp nhất
+  let k, ok=true;
+  if(target>=loRes.avg){ k=lo; ok = Math.abs(target-loRes.avg) <= loRes.avg*0.02; }
+  else if(target<=hiRes.avg){ k=hi; ok = Math.abs(target-hiRes.avg) <= Math.max(hiRes.avg,1)*0.02; }
+  else{
+    for(let iter=0; iter<50; iter++){
+      const mid=(lo+hi)/2;
+      const midAvg = avgCostForK(prices, mid, budget).avg;
+      if(midAvg>target) lo=mid; else hi=mid;
+    }
+    k=(lo+hi)/2;
+  }
+  const final = avgCostForK(prices, k, budget);
+  const tranches = prices.map((price,idx)=>({
+    price: Math.round(price),
+    amount: Math.round(budget*(final.weights[idx]/final.sumW))
+  }));
+  return { tranches, achieved: final.avg, ok };
+}
+
+function calcDcaPlan(p){
+  if(!p.tranches || !p.tranches.length){ p.tranches = genTranches(p, Math.max(p.soLan,1)); }
+  const base = calcFromTranches(p, p.tranches);
+  const cap = readCapital();
+  const navRef = p.navRieng>0 ? p.navRieng : cap.nav;
+  const budget = navRef * (p.pctMax/100);
+  const finalAvgCost = base.finalAvgCost;
   const stop = p.giaCatLo>0 ? p.giaCatLo : p.giaDay;
-  const rr = (p.giaHt-stop)!==0 ? (target-p.giaHt)/(p.giaHt-stop) : 0;
+
+  // Giá bán mong muốn: nếu chưa nhập, tạm giả định +20% so với giá vốn BQ để có con số tham khảo
+  const sellPrice = p.giaBanMongMuon>0 ? p.giaBanMongMuon : (finalAvgCost>0 ? Math.round(finalAvgCost*1.2) : 0);
+  const pctProfit = finalAvgCost>0 ? (sellPrice-finalAvgCost)/finalAvgCost*100 : 0;
+  const profitVnd = (sellPrice-finalAvgCost)*base.totalQty;
+  const pctLoss = finalAvgCost>0 ? (stop-finalAvgCost)/finalAvgCost*100 : 0;
+  const lossVnd = (stop-finalAvgCost)*base.totalQty;
+  const rr = pctLoss!==0 ? Math.abs(pctProfit/pctLoss) : 0;
+
   const pctVsFairValue = p.giaDinhGia>0 ? (p.giaDinhGia-p.giaHt)/p.giaDinhGia*100 : 0;
   const pctToBottom = p.giaHt>0 ? (p.giaHt-p.giaDay)/p.giaHt*100 : 0;
 
-  return {tranches, budget, rr, pctVsFairValue, pctToBottom,
-    finalAvgCost: tranches.length?tranches[tranches.length-1].avgCost:0,
-    totalSpent: cumAmount};
+  let avgVsTarget = null;
+  if(p.giaBinhQuanMongMuon>0 && finalAvgCost>0){
+    const diffPct = (finalAvgCost-p.giaBinhQuanMongMuon)/p.giaBinhQuanMongMuon*100;
+    avgVsTarget = { diffPct, met: finalAvgCost<=p.giaBinhQuanMongMuon };
+  }
+
+  return {...base, budget, rr, pctVsFairValue, pctToBottom, finalAvgCost, stop,
+    sellPrice, pctProfit, profitVnd, pctLoss, lossVnd, avgVsTarget, sellIsDefault: !(p.giaBanMongMuon>0)};
 }
 
 function dcaFieldRow(p, idx){
@@ -851,39 +1059,52 @@ function dcaFieldRow(p, idx){
       ${money('giaDinhGia','Giá định giá (CTCK)',p.giaDinhGia)}
       ${money('giaHt','Giá hiện tại',p.giaHt)}
       ${money('giaDay','Giá đáy dự kiến',p.giaDay)}
-      ${money('giaChotLoi','Giá chốt lời mục tiêu',p.giaChotLoi)}
       ${money('giaCatLo','Giá cắt lỗ',p.giaCatLo)}
+      ${money('giaBinhQuanMongMuon','Giá bình quân mong muốn (tuỳ chọn)',p.giaBinhQuanMongMuon)}
+      ${money('giaBanMongMuon','Giá bán mong muốn (chốt lời)',p.giaBanMongMuon)}
       ${plain('pctMax','% NAV tối đa cho mã này',p.pctMax,1)}
-      ${plain('soLan','Số lần DCA',p.soLan,1)}
+      ${plain('soLan','Số lần DCA (khi tạo lại theo công thức)',p.soLan,1)}
       ${plain('soThang','Gom mua trong (tháng)',p.soThang,1)}
-    </div>`;
+    </div>
+    <div class="btn-row" style="margin-top:12px;">
+      <button class="btn" data-regen="${idx}">🔄 Tạo lại các lần mua theo công thức</button>
+      <button class="btn" data-suggest="${idx}">🎯 Gợi ý số lần theo giá bình quân mong muốn</button>
+      <button class="btn" data-addtranche="${idx}">+ Thêm 1 lần mua (tự nhập)</button>
+    </div>
+    <div class="empty-note" id="dcaSuggestNote-${idx}"></div>`;
 }
 
-function tranchesTableHTML(r){
+function tranchesTableHTML(r, idx){
   return `<table style="min-width:0;">
-    <thead><tr><th>Lần</th><th>Giá kích hoạt</th><th>% giảm</th><th>Ngày dự kiến</th><th>% vốn</th><th>Số tiền</th><th>SL (lô 100)</th><th>Giá vốn BQ luỹ kế</th></tr></thead>
+    <thead><tr><th>Lần</th><th>Giá kích hoạt</th><th>% giảm</th><th>Ngày dự kiến</th><th>Số tiền</th><th>SL (lô 100)</th><th>Giá vốn BQ luỹ kế</th><th></th></tr></thead>
     <tbody>
       ${r.tranches.map((tr,i)=>`<tr>
         <td class="num">${i+1}</td>
-        <td class="num">${fmt(tr.price)}</td>
+        <td class="num"><input data-tr="${idx}" data-ti="${i}" data-tk="price" type="text" inputmode="numeric" value="${groupVN(tr.price)}" style="width:80px;text-align:right;"></td>
         <td class="num">${tr.dropPct.toFixed(1)}%</td>
         <td class="num">${tr.date}</td>
-        <td class="num">${tr.weightPct.toFixed(1)}%</td>
-        <td class="num">${fmt(tr.amount)}</td>
+        <td class="num"><input data-tr="${idx}" data-ti="${i}" data-tk="amount" type="text" inputmode="numeric" value="${groupVN(tr.amount)}" style="width:100px;text-align:right;"></td>
         <td class="num">${fmt(tr.qty)}</td>
         <td class="num">${fmt(tr.avgCost)}</td>
+        <td><button class="rm-btn" data-rmtr="${idx}" data-rmti="${i}">✕</button></td>
       </tr>`).join('')}
     </tbody>
   </table>`;
 }
 function statStripHTML(r){
+  const avgTargetLine = r.avgVsTarget
+    ? `<div class="stat"><div class="l">So với giá BQ mong muốn</div><div class="v ${r.avgVsTarget.met?'rr-good':'rr-bad'}">${r.avgVsTarget.met?'Đạt':'Chưa đạt'} (${r.avgVsTarget.diffPct>=0?'+':''}${r.avgVsTarget.diffPct.toFixed(1)}%)</div></div>`
+    : '';
   return `
     <div class="stat"><div class="l">Giảm so với định giá</div><div class="v">${fmtPct(r.pctVsFairValue)}</div></div>
     <div class="stat"><div class="l">Còn có thể giảm tới đáy</div><div class="v">${r.pctToBottom.toFixed(1)}%</div></div>
-    <div class="stat"><div class="l">R:R (lãi/rủi ro)</div><div class="v ${r.rr>=2?'rr-good':'rr-bad'}">${r.rr.toFixed(2)} : 1</div></div>
-    <div class="stat"><div class="l">Ngân sách giải ngân</div><div class="v">${fmt(r.budget)} đ</div></div>
-    <div class="stat"><div class="l">Thực chi (sau làm tròn lô)</div><div class="v">${fmt(r.totalSpent)} đ</div></div>
+    <div class="stat"><div class="l">Ngân sách theo %NAV</div><div class="v">${fmt(r.budget)} đ</div></div>
+    <div class="stat"><div class="l">Thực chi theo kế hoạch</div><div class="v">${fmt(r.totalSpent)} đ</div></div>
     <div class="stat"><div class="l">Giá vốn BQ dự kiến</div><div class="v">${fmt(r.finalAvgCost)} đ</div></div>
+    ${avgTargetLine}
+    <div class="stat"><div class="l">Lãi nếu bán tại giá mong muốn${r.sellIsDefault?' (tạm tính +20%)':''}</div><div class="v rr-good">${fmtPct(r.pctProfit)} · ${fmt(r.profitVnd)} đ</div></div>
+    <div class="stat"><div class="l">Lỗ nếu chạm giá cắt lỗ</div><div class="v rr-bad">${fmtPct(r.pctLoss)} · ${fmt(r.lossVnd)} đ</div></div>
+    <div class="stat"><div class="l">R:R (Lãi / Lỗ)</div><div class="v ${r.rr>=2?'rr-good':'rr-bad'}">${r.rr.toFixed(2)} : 1</div></div>
   `;
 }
 
@@ -904,7 +1125,8 @@ function buildDcaList(){
       </div>
       ${dcaFieldRow(p, idx)}
       <div class="stat-strip" data-stats></div>
-      <div class="table-scroll" style="margin-top:14px;" data-tranches></div>
+      <div class="cap" style="margin-top:8px;">* Lãi/Lỗ và R:R đều tính từ Giá vốn bình quân dự kiến (không phải giá hiện tại) — vì đó là giá vốn thực tế sau khi DCA xong.</div>
+      <div class="table-scroll" style="margin-top:10px;" data-tranches></div>
     `;
     list.appendChild(div);
   });
@@ -930,8 +1152,71 @@ function buildDcaList(){
       saveState();
     });
   });
+  list.querySelectorAll('[data-regen]').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      const i = +e.target.dataset.regen;
+      const p = dcaPlans[i];
+      p.tranches = genTranches(p, Math.max(p.soLan,1));
+      const note = document.getElementById('dcaSuggestNote-'+i);
+      if(note) note.textContent = '';
+      updateDcaComputed();
+      saveState();
+    });
+  });
+  list.querySelectorAll('[data-suggest]').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      const i = +e.target.dataset.suggest;
+      const p = dcaPlans[i];
+      if(!(p.giaBinhQuanMongMuon>0)){
+        const note0 = document.getElementById('dcaSuggestNote-'+i);
+        if(note0) note0.textContent = 'Hãy nhập "Giá bình quân mong muốn" trước để app tính.';
+        return;
+      }
+      const n = Math.max(p.soLan>=2 ? p.soLan : 5, 2);
+      p.soLan = n;
+      const result = solveTranchesForTarget(p, n);
+      p.tranches = result.tranches;
+      buildDcaList(); // rebuild trước, rồi mới ghi note để không bị xoá mất
+      const note = document.getElementById('dcaSuggestNote-'+i);
+      if(note){
+        note.textContent = result.ok
+          ? `Đã tính số tiền mỗi lần trong ${n} lần mua để giá bình quân đạt ≈ ${fmt(result.achieved)} đ (mục tiêu ${fmt(p.giaBinhQuanMongMuon)} đ).`
+          : `Không thể đạt đúng mục tiêu trong khoảng Giá hiện tại–Giá đáy đã nhập — đã chọn phương án gần nhất (≈ ${fmt(result.achieved)} đ). Hãy thử đổi "Giá đáy dự kiến" hoặc "Số lần DCA".`;
+      }
+      saveState();
+    });
+  });
+  list.querySelectorAll('[data-addtranche]').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      const i = +e.target.dataset.addtranche;
+      const p = dcaPlans[i];
+      const last = p.tranches[p.tranches.length-1];
+      p.tranches.push({price: last?last.price:p.giaHt, amount:0});
+      updateDcaComputed();
+      saveState();
+    });
+  });
 
   updateDcaComputed();
+}
+
+function attachTrancheHandlers(){
+  document.querySelectorAll('input[data-tr]').forEach(el=>{
+    el.addEventListener('input', e=>{
+      const pi = +el.dataset.tr, ti = +el.dataset.ti, k = el.dataset.tk;
+      dcaPlans[pi].tranches[ti][k] = liveFormatMoney(el);
+      updateDcaComputed();
+      saveState();
+    });
+  });
+  document.querySelectorAll('[data-rmtr]').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      const pi = +e.target.dataset.rmtr, ti = +e.target.dataset.rmti;
+      dcaPlans[pi].tranches.splice(ti,1);
+      updateDcaComputed();
+      saveState();
+    });
+  });
 }
 
 function updateDcaComputed(){
@@ -940,15 +1225,19 @@ function updateDcaComputed(){
     if(!div) return;
     const r = calcDcaPlan(p);
     div.querySelector('[data-stats]').innerHTML = statStripHTML(r);
-    div.querySelector('[data-tranches]').innerHTML = tranchesTableHTML(r);
+    div.querySelector('[data-tranches]').innerHTML = tranchesTableHTML(r, idx);
   });
+  attachTrancheHandlers();
 }
 
 document.getElementById('btnAddDca').addEventListener('click',()=>{
-  dcaPlans.push({
+  const p = {
     ma:'', giaDinhGia:30000, giaHt:22000, giaDay:18000,
-    giaChotLoi:0, giaCatLo:0, pctMax:25, soLan:4, soThang:2, navRieng:0
-  });
+    giaCatLo:0, giaBinhQuanMongMuon:0, giaBanMongMuon:0,
+    pctMax:25, soLan:4, soThang:2, navRieng:0
+  };
+  p.tranches = genTranches(p, p.soLan);
+  dcaPlans.push(p);
   buildDcaList();
   saveState();
 });
@@ -974,8 +1263,11 @@ function renderAll(){
   buildDcaList();
 }
 (async function init(){
+  renderMethodTabs();
   renderChecklist();
   await loadState();
+  renderMethodTabs();
+  renderChecklist();
   renderAll();
 })();
 </script>
