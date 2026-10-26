@@ -223,7 +223,7 @@ input,select{font:inherit;font-size:16px;color:var(--fg);background:var(--surfac
 (function(){
 var KEY="sotietkiem.v1", PREF="sotietkiem.pref";
 var books=[], store=null, migrated=false;
-var st={status:"active",bank:"",open:null,del:null,editing:null};
+var st={status:"active",bank:"",open:null,del:null,editing:null,sort:"due"};
 var $=function(s){return document.querySelector(s)};
 var esc=function(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})};
 var nf=new Intl.NumberFormat("vi-VN");
@@ -339,6 +339,7 @@ function renderFilters(){
   banks.sort();
   if(st.bank&&banks.indexOf(st.bank)<0)st.bank="";
   var h='<div class="seg"><button type="button" data-st="active" aria-pressed="'+(st.status==="active")+'">Đang gửi</button><button type="button" data-st="settled" aria-pressed="'+(st.status==="settled")+'">Đã tất toán</button></div>';
+  h+='<div class="seg" role="group" aria-label="Sắp xếp"><button type="button" data-sort="due" aria-pressed="'+(st.sort!=="amount")+'">Đáo hạn gần nhất</button><button type="button" data-sort="amount" aria-pressed="'+(st.sort==="amount")+'">Số tiền lớn nhất</button></div>';
   if(banks.length>1){
     h+='<div class="chips"><button type="button" class="chip" data-bank="" aria-pressed="'+(st.bank==="")+'">Tất cả</button>'+
       banks.map(function(n){return '<button type="button" class="chip" data-bank="'+esc(n)+'" aria-pressed="'+(st.bank===n)+'">'+esc(n)+'</button>'}).join("")+'</div>';
@@ -350,7 +351,7 @@ function renderList(){
   var items=books.filter(function(b){return st.status==="active"?!b.settled:!!b.settled})
     .filter(function(b){return !st.bank||(b.bank||"Khác")===st.bank})
     .map(function(b){return {b:b,c:calc(b)}})
-    .sort(function(x,y){return x.c.end-y.c.end});
+    .sort(function(x,y){return st.sort==="amount"?(y.b.principal-x.b.principal)||(x.c.end-y.c.end):(x.c.end-y.c.end)||(y.b.principal-x.b.principal)});
   var el=$("#list");
   if(!items.length){
     if(!books.length){
@@ -463,7 +464,7 @@ $("#f").addEventListener("submit",function(e){
   var b={id:old?old.id:newId(),bank:d.bank,note:d.note,principal:d.principal,start:d.start,term:d.term,rate:d.rate,
     payout:d.payout,method:d.method,settled:old?!!old.settled:false,createdAt:old?old.createdAt:Date.now()};
   if(old&&old.sample)b.sample=true;
-  setPref({payout:d.payout,method:d.method});
+  setPref(Object.assign(getPref(),{payout:d.payout,method:d.method}));
   st.open=b.id;closeForm();persist(b);toast(old?"Đã cập nhật sổ":"Đã thêm sổ");
 });
 $("#close").addEventListener("click",closeForm);
@@ -473,8 +474,9 @@ $("#add").addEventListener("click",function(){openForm()});
 
 /* ---------- tương tác danh sách ---------- */
 $("#filters").addEventListener("click",function(e){
-  var s=e.target.closest("[data-st]"),b=e.target.closest("[data-bank]");
-  if(s){st.status=s.dataset.st;st.bank="";st.open=null;render()}
+  var s=e.target.closest("[data-st]"),b=e.target.closest("[data-bank]"),o=e.target.closest("[data-sort]");
+  if(o){st.sort=o.dataset.sort;setPref(Object.assign(getPref(),{sort:st.sort}));render()}
+  else if(s){st.status=s.dataset.st;st.bank="";st.open=null;render()}
   else if(b){st.bank=b.dataset.bank;render()}
 });
 $("#list").addEventListener("click",function(e){
@@ -630,6 +632,7 @@ async function initSync(){
 }
 
 try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
+st.sort=getPref().sort==="amount"?"amount":"due";
 books=loadLocal();render();initSync();
 })();
 </script>
