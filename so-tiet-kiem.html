@@ -1,6 +1,15 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Sổ tiết kiệm">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#0E6B57">
+<meta name="color-scheme" content="light dark">
 <title>Sổ Tiết Kiệm</title>
-<meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600&display=swap">
 <style>
 /* Layout: một cột như sổ tay trên iPhone. Thẻ tổng quan ở trên, danh sách sổ ở giữa, nút thêm sổ cố định dưới đáy. */
@@ -9,6 +18,7 @@
   --accent:#0E6B57; --accent-fg:#FFFFFF; --accent-soft:#DCEFE9;
   --warn:#9A5B00; --warn-soft:#FBEBD0; --crit:#B3261E; --crit-soft:#F9DEDC; --done:#6B7B76; --done-soft:#E4EBE8;
   --shade:rgba(8,24,20,.45);
+  --c1:#0E6B57; --c2:#2F6FB5; --c3:#C98A12; --c4:#8C5BB5; --c5:#C2523E; --c6:#3F9AAE; --c7:#7A8F3A; --c8:#8A8F94;
   --f-ui:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",sans-serif;
   --f-num:"Fraunces","Be Vietnam Pro",Georgia,serif;
 }
@@ -16,12 +26,14 @@
   --bg:#0B1613; --surface:#12221E; --fg:#E6F0ED; --muted:#93A8A1; --line:#223630;
   --accent:#4FC3A1; --accent-fg:#04201A; --accent-soft:#14382F;
   --warn:#F0B35A; --warn-soft:#3A2B10; --crit:#F2A29C; --crit-soft:#3D1A18; --done:#93A8A1; --done-soft:#1B2E29;
-  --shade:rgba(0,0,0,.6); color-scheme:dark}}
+  --shade:rgba(0,0,0,.6);
+  --c1:#4FC3A1; --c2:#6FA8E8; --c3:#E3B04B; --c4:#B792E0; --c5:#E8806C; --c6:#62C3D6; --c7:#A4BD5C; --c8:#9AA5A1; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0B1613; --surface:#12221E; --fg:#E6F0ED; --muted:#93A8A1; --line:#223630;
   --accent:#4FC3A1; --accent-fg:#04201A; --accent-soft:#14382F;
   --warn:#F0B35A; --warn-soft:#3A2B10; --crit:#F2A29C; --crit-soft:#3D1A18; --done:#93A8A1; --done-soft:#1B2E29;
-  --shade:rgba(0,0,0,.6); color-scheme:dark}
+  --shade:rgba(0,0,0,.6);
+  --c1:#4FC3A1; --c2:#6FA8E8; --c3:#E3B04B; --c4:#B792E0; --c5:#E8806C; --c6:#62C3D6; --c7:#A4BD5C; --c8:#9AA5A1; color-scheme:dark}
 
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--fg);font-family:var(--f-ui);font-size:15px;line-height:1.45;
@@ -127,6 +139,19 @@ input,select{font:inherit;font-size:16px;color:var(--fg);background:var(--surfac
 .tbl tr[data-goto]{cursor:pointer}
 .tbl td small{display:block;color:var(--muted);font-size:12px}
 .tbl .nm{font-weight:600;white-space:normal;min-width:96px;overflow-wrap:anywhere}
+.alloc{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:14px}
+.alloc h2{margin:0;font-size:15px;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.alloc h2 span{font-size:12px;font-weight:500;color:var(--muted)}
+.stack{display:flex;height:14px;border-radius:99px;overflow:hidden;gap:2px;background:var(--done-soft)}
+.stack i{display:block;height:100%;min-width:4px}
+.arow{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:2px 10px;align-items:baseline}
+.arow+.arow{border-top:1px solid var(--line);padding-top:10px;margin-top:10px}
+.arow .dot{width:10px;height:10px;border-radius:3px;align-self:center}
+.arow .nm{font-weight:600;overflow-wrap:anywhere}
+.arow .v{font-weight:700;font-variant-numeric:tabular-nums;text-align:right}
+.arow .sub{grid-column:2/4;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.arow .meter{grid-column:2/4;height:5px;background:var(--done-soft);border-radius:99px;overflow:hidden}
+.arow .meter i{display:block;height:100%;border-radius:99px}
 .io{display:flex;flex-direction:column;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px}
 .io h2{margin:0;font-size:15px}
 .io p{margin:0;font-size:13px;color:var(--muted)}
@@ -135,10 +160,14 @@ input,select{font:inherit;font-size:16px;color:var(--fg);background:var(--surfac
 @media (prefers-reduced-motion:no-preference){.bar i{transition:width .4s}}
 </style>
 
+<style>:root{padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
+</head>
+<body>
 <div class="wrap">
   <header><h1>Sổ tiết kiệm</h1><span class="sync" id="sync">Lưu trên máy</span></header>
   <section class="sum" id="sum" aria-label="Tổng quan"></section>
   <section class="alerts" id="alerts" hidden aria-label="Thông báo đáo hạn"></section>
+  <section class="alloc" id="alloc" hidden aria-label="Phân bổ theo ngân hàng"></section>
   <section class="filters" id="filters"></section>
   <section class="list" id="list" aria-live="polite"></section>
   <section class="io" aria-label="Xuất nhập dữ liệu">
@@ -260,7 +289,24 @@ async function removeBook(id){
 function newId(){return "b"+Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
 
 /* ---------- hiển thị ---------- */
-function render(){renderSum();renderAlerts();renderFilters();renderList();renderBanks()}
+function render(){renderSum();renderAlerts();renderAlloc();renderFilters();renderList();renderBanks()}
+
+function renderAlloc(){
+  var act=books.filter(function(b){return !b.settled}),el=$("#alloc");
+  if(!act.length){el.hidden=true;el.innerHTML="";return}
+  var map={},total=0;
+  act.forEach(function(b){var n=b.bank||"Khác",c=calc(b),g=map[n]||(map[n]={n:n,p:0,i:0,w:0,k:0});
+    g.p+=b.principal;g.i+=c.interest;g.w+=b.principal*b.rate;g.k++;total+=b.principal});
+  var gs=Object.keys(map).map(function(k){return map[k]}).sort(function(a,b){return b.p-a.p});
+  if(gs.length>8){var rest=gs.slice(7).reduce(function(a,g){a.p+=g.p;a.i+=g.i;a.w+=g.w;a.k+=g.k;return a},{n:"Ngân hàng khác",p:0,i:0,w:0,k:0});gs=gs.slice(0,7).concat([rest])}
+  var pct=function(p){return total?p/total*100:0};
+  el.hidden=false;
+  el.innerHTML='<h2>Phân bổ theo ngân hàng <span>'+gs.length+' ngân hàng · '+act.length+' sổ</span></h2>'+
+    '<div class="stack" role="img" aria-label="Tỷ trọng gốc theo ngân hàng">'+gs.map(function(g,i){return '<i style="width:'+pct(g.p)+'%;background:var(--c'+(i+1)+')"></i>'}).join("")+'</div>'+
+    '<div>'+gs.map(function(g,i){var p=pct(g.p),avg=g.p?g.w/g.p:0;
+      return '<div class="arow"><span class="dot" style="background:var(--c'+(i+1)+')"></span><span class="nm">'+esc(g.n)+'</span><span class="v">'+p.toFixed(1).replace(".",",")+'%</span>'+
+        '<span class="sub"><span>'+vnd(g.p)+' · '+g.k+' sổ</span><span>Lãi '+vnd(g.i)+' · '+avg.toFixed(2).replace(".",",")+'%/năm</span></span></div>'}).join("")+'</div>';
+}
 
 function renderAlerts(){
   var rows=books.filter(function(b){return !b.settled}).map(function(b){return {b:b,c:calc(b)}})
@@ -470,7 +516,6 @@ var dl=null;
 function ioMsg(m){$("#iomsg").textContent=m}
 async function exportXlsx(){
   if(!window.XLSX){ioMsg("Chưa tải được thư viện Excel. Kiểm tra kết nối rồi tải lại trang.");return}
-  if(!dl){ioMsg("Chức năng lưu file chỉ dùng được khi mở trang trong ứng dụng hoặc trình duyệt của Claude.");return}
   var head=["Ngân hàng","Ghi chú","Số tiền gửi (đ)","Ngày gửi","Kỳ hạn (tháng)","Lãi suất (%/năm)","Trả lãi","Cách tính lãi","Trạng thái","Ngày đáo hạn","Tiền lãi (đ)","Gốc + lãi (đ)"];
   var rows=books.slice().sort(function(a,b){return calc(a).end-calc(b).end}).map(function(b){
     var c=calc(b);
@@ -479,12 +524,28 @@ async function exportXlsx(){
   var ws=XLSX.utils.aoa_to_sheet([head].concat(rows));
   ws["!cols"]=[18,24,18,13,14,16,13,20,13,14,16,16].map(function(w){return {wch:w}});
   var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Sổ tiết kiệm");
+  var name="so-tiet-kiem-"+iso(today())+".xlsx";
   try{
     var buf=XLSX.write(wb,{bookType:"xlsx",type:"array"});
-    await dl.save({filename:"so-tiet-kiem-"+iso(today())+".xlsx",data:buf});
-    ioMsg("Đã xuất "+books.length+" sổ ra file Excel.");
+    if(dl){
+      await dl.save({filename:name,data:buf});
+      ioMsg("Đã xuất "+books.length+" sổ ra file Excel.");return;
+    }
+    var mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+    var blob=new Blob([buf],{type:mime});
+    if(window.File&&navigator.canShare&&navigator.share){
+      var file=new File([blob],name,{type:mime});
+      if(navigator.canShare({files:[file]})){
+        await navigator.share({files:[file],title:name});
+        ioMsg("Đã mở bảng chia sẻ. Chọn \"Lưu vào Tệp\" để giữ file Excel.");return;
+      }
+    }
+    var a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();
+    setTimeout(function(){URL.revokeObjectURL(a.href)},10000);
+    ioMsg("Đã gửi lệnh tải file "+name+". Nếu không thấy file, mở trang bằng Safari và thử lại.");
   }catch(e){
-    ioMsg(e&&e.code==="declined"?"Bạn đã hủy lưu file.":"Không lưu được file. Thử lại sau.");
+    ioMsg(e&&(e.code==="declined"||e.name==="AbortError")?"Bạn đã hủy lưu file.":"Không lưu được file. Mở trang bằng Safari rồi thử lại.");
   }
 }
 function norm(s){return String(s==null?"":s).normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[đĐ]/g,"d").toLowerCase().trim()}
@@ -568,8 +629,10 @@ async function initSync(){
   }catch(e){}
 }
 
+try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
 books=loadLocal();render();initSync();
 })();
 </script>
 
-</body></html>
+</body>
+</html>
