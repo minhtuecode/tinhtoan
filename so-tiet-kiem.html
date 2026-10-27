@@ -1,15 +1,6 @@
-<!doctype html>
-<html lang="vi">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Sổ tiết kiệm">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="theme-color" content="#0E6B57">
-<meta name="color-scheme" content="light dark">
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>Sổ Tiết Kiệm</title>
+<meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600&display=swap">
 <style>
 /* Layout: một cột như sổ tay trên iPhone. Thẻ tổng quan ở trên, danh sách sổ ở giữa, nút thêm sổ cố định dưới đáy. */
@@ -71,7 +62,10 @@ h1{margin:0;font-size:22px;font-weight:700;letter-spacing:-.01em}
 .card>button.head:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 .top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
 .bank{font-weight:700;font-size:16px;min-width:0;overflow-wrap:anywhere}
-.note{font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+.note{font-size:14px;color:var(--fg);overflow-wrap:anywhere}
+.meta{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;margin-top:4px}
+.who{background:var(--accent-soft);color:var(--accent);font-weight:600;font-size:12px;border-radius:6px;padding:1px 8px;white-space:nowrap}
+.flab{font-size:12px;color:var(--muted);font-weight:600;margin-bottom:-4px}
 .pill{flex:none;font-size:12px;font-weight:600;border-radius:999px;padding:3px 10px;background:var(--accent-soft);color:var(--accent)}
 .pill.warn{background:var(--warn-soft);color:var(--warn)}
 .pill.crit{background:var(--crit-soft);color:var(--crit)}
@@ -160,9 +154,6 @@ input,select{font:inherit;font-size:16px;color:var(--fg);background:var(--surfac
 @media (prefers-reduced-motion:no-preference){.bar i{transition:width .4s}}
 </style>
 
-<style>:root{padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
-</head>
-<body>
 <div class="wrap">
   <header><h1>Sổ tiết kiệm</h1><span class="sync" id="sync">Lưu trên máy</span></header>
   <section class="sum" id="sum" aria-label="Tổng quan"></section>
@@ -170,6 +161,16 @@ input,select{font:inherit;font-size:16px;color:var(--fg);background:var(--surfac
   <section class="alloc" id="alloc" hidden aria-label="Phân bổ theo ngân hàng"></section>
   <section class="filters" id="filters"></section>
   <section class="list" id="list" aria-live="polite"></section>
+  <section class="io" aria-label="Xuất lịch nhắc đáo hạn">
+    <h2>Lịch nhắc đáo hạn cho iPhone</h2>
+    <p>Tạo file lịch (.ics) có chuông nhắc trước ngày đáo hạn và đúng ngày đáo hạn lúc 9:00. Mở file trên iPhone rồi chọn "Thêm tất cả" để vào Lịch.</p>
+    <div class="two">
+      <label>Sổ của ai<select id="c-owner"></select></label>
+      <label>Nhắc trước<select id="c-days"><option value="1">1 ngày</option><option value="2" selected>2 ngày</option><option value="3">3 ngày</option><option value="7">7 ngày</option></select></label>
+    </div>
+    <div class="acts"><button type="button" class="btn primary" id="cal">Xuất lịch (.ics)</button></div>
+    <div class="msg" id="calmsg" role="status"></div>
+  </section>
   <section class="io" aria-label="Xuất nhập dữ liệu">
     <h2>Chuyển dữ liệu sang máy khác</h2>
     <p>Xuất toàn bộ sổ ra file Excel, rồi nhập file đó trên máy mới. Cột Ngày đáo hạn, Tiền lãi và Gốc + lãi chỉ để xem, app tự tính lại khi nhập.</p>
@@ -188,11 +189,13 @@ input,select{font:inherit;font-size:16px;color:var(--fg);background:var(--surfac
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="ft">
     <div class="hd"><h2 id="ft">Thêm sổ</h2><button type="button" class="x" id="close" aria-label="Đóng">×</button></div>
     <form id="f" novalidate>
-      <div class="two">
-        <label>Ngân hàng<input id="f-bank" list="banks" autocomplete="off" placeholder="VD: Vietcombank"></label>
-        <label>Tên / ghi chú<input id="f-note" autocomplete="off" placeholder="VD: Quỹ mua nhà"></label>
-      </div>
+      <label>Ngân hàng<input id="f-bank" list="banks" autocomplete="off" placeholder="VD: Vietcombank"></label>
       <datalist id="banks"></datalist>
+      <label>Người gửi (sổ của ai)
+        <input id="f-owner" autocomplete="off" placeholder="VD: Vợ, Chồng, Mẹ, Bố">
+        <span class="terms-q" id="oq"></span>
+      </label>
+      <label>Ghi chú<input id="f-note" autocomplete="off" placeholder="VD: Quỹ mua nhà, sổ số 2"></label>
       <label>Số tiền gửi đầu kỳ (đ)<input id="f-amt" inputmode="numeric" autocomplete="off" placeholder="100.000.000"></label>
       <div class="two">
         <label>Ngày gửi (dd/mm/yyyy)<input id="f-start" inputmode="numeric" autocomplete="off" maxlength="10" placeholder="31/08/2026"></label>
@@ -223,7 +226,7 @@ input,select{font:inherit;font-size:16px;color:var(--fg);background:var(--surfac
 (function(){
 var KEY="sotietkiem.v1", PREF="sotietkiem.pref";
 var books=[], store=null, migrated=false;
-var st={status:"active",bank:"",open:null,del:null,editing:null,sort:"due"};
+var st={status:"active",bank:"",open:null,del:null,editing:null,sort:"due",owner:"",by:"bank"};
 var $=function(s){return document.querySelector(s)};
 var esc=function(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})};
 var nf=new Intl.NumberFormat("vi-VN");
@@ -289,7 +292,15 @@ async function removeBook(id){
 function newId(){return "b"+Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
 
 /* ---------- hiển thị ---------- */
-function render(){renderSum();renderAlerts();renderAlloc();renderFilters();renderList();renderBanks()}
+function render(){renderSum();renderAlerts();renderAlloc();renderFilters();renderList();renderBanks();renderCal()}
+
+function renderCal(){
+  var sel=$("#c-owner"),cur=sel.value,names=[];
+  books.forEach(function(b){if(!b.settled){var n=b.owner||"Chưa ghi";if(names.indexOf(n)<0)names.push(n)}});
+  names.sort();
+  sel.innerHTML='<option value="*">Tất cả</option>'+names.map(function(n){return '<option value="'+esc(n)+'">'+esc(n)+'</option>'}).join("");
+  sel.value=names.indexOf(cur)>=0||cur==="*"?cur:"*";
+}
 
 function renderAlloc(){
   var act=books.filter(function(b){return !b.settled}),el=$("#alloc");
@@ -316,7 +327,7 @@ function renderAlerts(){
   el.hidden=false;
   el.innerHTML='<h2>Thông báo đáo hạn <span>'+rows.length+' sổ trong 30 ngày tới</span></h2><div class="tbl"><table><thead><tr><th>Sổ</th><th>Ngày gửi</th><th>Đáo hạn</th><th>Còn lại</th></tr></thead><tbody>'+
     rows.map(function(x){var b=x.b,c=x.c,k=leftCls(b,c);
-      return '<tr data-goto="'+b.id+'"><td class="nm">'+esc(b.bank||"Sổ tiết kiệm")+'<small>'+vnd(c.total)+'</small></td><td>'+dmy(parse(b.start))+'</td><td>'+dmy(c.end)+'</td><td><span class="pill '+k+'">'+(c.left<0?"Quá "+(-c.left)+" ngày":(c.left===0?"Hôm nay":c.left+" ngày"))+'</span></td></tr>'}).join("")+
+      return '<tr data-goto="'+b.id+'"><td class="nm">'+esc(b.bank||"Sổ tiết kiệm")+'<small>'+(b.owner?esc(b.owner)+' · ':"")+vnd(c.total)+'</small></td><td>'+dmy(parse(b.start))+'</td><td>'+dmy(c.end)+'</td><td><span class="pill '+k+'">'+(c.left<0?"Quá "+(-c.left)+" ngày":(c.left===0?"Hôm nay":c.left+" ngày"))+'</span></td></tr>'}).join("")+
     '</tbody></table></div>';
 }
 
@@ -338,10 +349,17 @@ function renderFilters(){
   var banks=[];inStatus.forEach(function(b){var n=b.bank||"Khác";if(banks.indexOf(n)<0)banks.push(n)});
   banks.sort();
   if(st.bank&&banks.indexOf(st.bank)<0)st.bank="";
+  var owners=[];inStatus.forEach(function(b){var n=b.owner||"Chưa ghi";if(owners.indexOf(n)<0)owners.push(n)});
+  owners.sort();
+  if(st.owner&&owners.indexOf(st.owner)<0)st.owner="";
   var h='<div class="seg"><button type="button" data-st="active" aria-pressed="'+(st.status==="active")+'">Đang gửi</button><button type="button" data-st="settled" aria-pressed="'+(st.status==="settled")+'">Đã tất toán</button></div>';
   h+='<div class="seg" role="group" aria-label="Sắp xếp"><button type="button" data-sort="due" aria-pressed="'+(st.sort!=="amount")+'">Đáo hạn gần nhất</button><button type="button" data-sort="amount" aria-pressed="'+(st.sort==="amount")+'">Số tiền lớn nhất</button></div>';
+  if(owners.length>1){
+    h+='<div class="flab">Người gửi</div><div class="chips"><button type="button" class="chip" data-owner="" aria-pressed="'+(st.owner==="")+'">Tất cả</button>'+
+      owners.map(function(n){return '<button type="button" class="chip" data-owner="'+esc(n)+'" aria-pressed="'+(st.owner===n)+'">'+esc(n)+'</button>'}).join("")+'</div>';
+  }
   if(banks.length>1){
-    h+='<div class="chips"><button type="button" class="chip" data-bank="" aria-pressed="'+(st.bank==="")+'">Tất cả</button>'+
+    h+='<div class="flab">Ngân hàng</div><div class="chips"><button type="button" class="chip" data-bank="" aria-pressed="'+(st.bank==="")+'">Tất cả</button>'+
       banks.map(function(n){return '<button type="button" class="chip" data-bank="'+esc(n)+'" aria-pressed="'+(st.bank===n)+'">'+esc(n)+'</button>'}).join("")+'</div>';
   }
   $("#filters").innerHTML=h;
@@ -350,6 +368,7 @@ function renderFilters(){
 function renderList(){
   var items=books.filter(function(b){return st.status==="active"?!b.settled:!!b.settled})
     .filter(function(b){return !st.bank||(b.bank||"Khác")===st.bank})
+    .filter(function(b){return !st.owner||(b.owner||"Chưa ghi")===st.owner})
     .map(function(b){return {b:b,c:calc(b)}})
     .sort(function(x,y){return st.sort==="amount"?(y.b.principal-x.b.principal)||(x.c.end-y.c.end):(x.c.end-y.c.end)||(y.b.principal-x.b.principal)});
   var el=$("#list");
@@ -368,13 +387,15 @@ function card(b,c){
   var s=status(b,c), open=st.open===b.id;
   var pct=b.settled?100:Math.max(0,Math.min(100,c.pct));
   var h='<article class="card" id="card-'+b.id+'"><button type="button" class="head" data-open="'+b.id+'" aria-expanded="'+open+'">'+
-    '<div class="top"><div style="min-width:0"><div class="bank">'+esc(b.bank||"Sổ tiết kiệm")+(b.sample?'<span class="tag">Mẫu</span>':"")+'</div>'+(b.note?'<div class="note">'+esc(b.note)+'</div>':"")+'</div><span class="pill '+s.k+'">'+s.t+'</span></div>'+
+    '<div class="top"><div style="min-width:0"><div class="bank">'+esc(b.bank||"Sổ tiết kiệm")+(b.sample?'<span class="tag">Mẫu</span>':"")+'</div>'+((b.owner||b.note)?'<div class="meta">'+(b.owner?'<span class="who">'+esc(b.owner)+'</span>':"")+(b.note?'<span class="note">'+esc(b.note)+'</span>':"")+'</div>':"")+'</div><span class="pill '+s.k+'">'+s.t+'</span></div>'+
     '<div class="mid"><span class="amt">'+vnd(b.principal)+'</span><span class="terms num">'+String(b.rate).replace(".",",")+'%/năm · '+b.term+' tháng</span></div>'+
     '<div class="bar '+s.k+'"><i style="width:'+pct+'%"></i></div>'+
     '<div class="dates"><span>Gửi <b>'+dmy(parse(b.start))+'</b></span><span>Đáo hạn <b>'+dmy(c.end)+'</b></span></div>'+
     '<div class="when"><span class="left '+s.k+'">'+leftTxt(b,c)+'</span><span class="num">Lãi '+vnd(c.interest)+'</span></div></button>';
   if(open){
     h+='<div class="detail"><dl>'+
+      (b.owner?'<dt>Người gửi</dt><dd>'+esc(b.owner)+'</dd>':"")+
+      (b.note?'<dt>Ghi chú</dt><dd>'+esc(b.note)+'</dd>':"")+
       '<dt>Ngày gửi</dt><dd>'+dmy(parse(b.start))+'</dd>'+
       '<dt>Ngày đáo hạn</dt><dd>'+dmy(c.end)+(b.settled?"":(c.left>=0?" · còn "+c.left+" ngày":" · quá "+(-c.left)+" ngày"))+'</dd>'+
       '<dt>Trả lãi</dt><dd>'+PAY[b.payout]+'</dd>'+
@@ -407,7 +428,7 @@ function numAmt(){return Number($("#f-amt").value.replace(/\D/g,""))||0}
 function numRate(){var v=parseFloat($("#f-rate").value.replace(",","."));return isNaN(v)?null:v}
 function numTerm(){var v=parseInt($("#f-term").value,10);return isNaN(v)?0:v}
 function draft(){
-  return {bank:$("#f-bank").value.trim(),note:$("#f-note").value.trim(),principal:numAmt(),start:dmyToIso($("#f-start").value),
+  return {bank:$("#f-bank").value.trim(),owner:$("#f-owner").value.trim(),note:$("#f-note").value.trim(),principal:numAmt(),start:dmyToIso($("#f-start").value),
     term:numTerm(),rate:numRate(),payout:$("#f-pay").value,method:$("#f-method").value};
 }
 function valid(d){
@@ -421,8 +442,14 @@ function drawTerms(){
   var t=numTerm();
   $("#tq").innerHTML=TERMS.map(function(n){return '<button type="button" data-term="'+n+'" aria-pressed="'+(t===n)+'">'+n+'</button>'}).join("");
 }
+function drawOwners(){
+  var cur=$("#f-owner").value.trim(),list=["Tôi","Vợ","Chồng","Mẹ","Bố","Con"];
+  books.forEach(function(b){if(b.owner&&list.indexOf(b.owner)<0)list.push(b.owner)});
+  $("#oq").innerHTML=list.map(function(n){return '<button type="button" data-owner-pick="'+esc(n)+'" aria-pressed="'+(cur===n)+'">'+esc(n)+'</button>'}).join("");
+}
+$("#oq").addEventListener("click",function(e){var t=e.target.closest("[data-owner-pick]");if(t){$("#f-owner").value=t.dataset.ownerPick;drawPrev()}});
 function drawPrev(){
-  drawTerms();
+  drawTerms();drawOwners();
   var d=draft(),p=$("#prev");
   if(valid(d)){p.innerHTML='<span class="hint">Nhập đủ thông tin để xem lãi dự kiến.</span>';return}
   var c=calc(d);
@@ -436,6 +463,7 @@ function openForm(id){
   st.editing=id||null;
   $("#ft").textContent=b?"Sửa sổ":"Thêm sổ";
   $("#f-bank").value=b?b.bank||"":"";
+  $("#f-owner").value=b?b.owner||"":"";
   $("#f-note").value=b?b.note||"":"";
   $("#f-amt").value=b?fmtAmt(b.principal):"";
   $("#f-start").value=dmy(parse(b?b.start:iso(today())));
@@ -461,7 +489,7 @@ $("#f").addEventListener("submit",function(e){
   var d=draft(),m=valid(d);
   if(m){$("#err").textContent=m;return}
   var old=st.editing?books.find(function(x){return x.id===st.editing}):null;
-  var b={id:old?old.id:newId(),bank:d.bank,note:d.note,principal:d.principal,start:d.start,term:d.term,rate:d.rate,
+  var b={id:old?old.id:newId(),bank:d.bank,owner:d.owner,note:d.note,principal:d.principal,start:d.start,term:d.term,rate:d.rate,
     payout:d.payout,method:d.method,settled:old?!!old.settled:false,createdAt:old?old.createdAt:Date.now()};
   if(old&&old.sample)b.sample=true;
   setPref(Object.assign(getPref(),{payout:d.payout,method:d.method}));
@@ -474,9 +502,10 @@ $("#add").addEventListener("click",function(){openForm()});
 
 /* ---------- tương tác danh sách ---------- */
 $("#filters").addEventListener("click",function(e){
-  var s=e.target.closest("[data-st]"),b=e.target.closest("[data-bank]"),o=e.target.closest("[data-sort]");
-  if(o){st.sort=o.dataset.sort;setPref(Object.assign(getPref(),{sort:st.sort}));render()}
-  else if(s){st.status=s.dataset.st;st.bank="";st.open=null;render()}
+  var s=e.target.closest("[data-st]"),b=e.target.closest("[data-bank]"),o=e.target.closest("[data-sort]"),w=e.target.closest("[data-owner]");
+  if(w){st.owner=w.dataset.owner;render()}
+  else if(o){st.sort=o.dataset.sort;setPref(Object.assign(getPref(),{sort:st.sort}));render()}
+  else if(s){st.status=s.dataset.st;st.bank="";st.owner="";st.open=null;render()}
   else if(b){st.bank=b.dataset.bank;render()}
 });
 $("#list").addEventListener("click",function(e){
@@ -499,9 +528,9 @@ $("#list").addEventListener("click",function(e){
 function addSamples(){
   var t=today(),d=function(n){var x=new Date(t);x.setDate(x.getDate()-n);return iso(x)};
   var s=[
-    {bank:"Ngân hàng mẫu A",note:"Quỹ dự phòng",principal:200000000,start:d(120),term:6,rate:5.2,payout:"end",method:"days"},
-    {bank:"Ngân hàng mẫu B",note:"Tiền mua xe",principal:100000000,start:d(330),term:12,rate:5.6,payout:"monthly",method:"months"},
-    {bank:"Ngân hàng mẫu A",note:"Gửi đầu kỳ",principal:50000000,start:d(20),term:3,rate:4.3,payout:"start",method:"days"}
+    {bank:"Ngân hàng mẫu A",owner:"Vợ",note:"Quỹ dự phòng",principal:200000000,start:d(120),term:6,rate:5.2,payout:"end",method:"days"},
+    {bank:"Ngân hàng mẫu B",owner:"Chồng",note:"Tiền mua xe",principal:100000000,start:d(330),term:12,rate:5.6,payout:"monthly",method:"months"},
+    {bank:"Ngân hàng mẫu A",owner:"Mẹ",note:"Gửi đầu kỳ",principal:50000000,start:d(20),term:3,rate:4.3,payout:"start",method:"days"}
   ];
   s.forEach(function(x,i){x.id=newId()+i;x.settled=false;x.sample=true;x.createdAt=Date.now();persist(x)});
   toast("Đã nạp sổ mẫu. Bạn có thể xóa từng sổ.");
@@ -509,22 +538,71 @@ function addSamples(){
 
 $("#alerts").addEventListener("click",function(e){
   var r=e.target.closest("[data-goto]");if(!r)return;
-  st.status="active";st.bank="";st.open=r.dataset.goto;st.del=null;render();
+  st.status="active";st.bank="";st.owner="";st.open=r.dataset.goto;st.del=null;render();
   var c=document.getElementById("card-"+r.dataset.goto);if(c)c.scrollIntoView({behavior:"smooth",block:"center"});
 });
+
+/* ---------- xuất lịch .ics ---------- */
+function icsEsc(s){return String(s).replace(/\\/g,"\\\\").replace(/;/g,"\\;").replace(/,/g,"\\,").replace(/\r?\n/g,"\\n")}
+function icsFold(line){
+  var enc=new TextEncoder(),out=[],cur="",n=0;
+  for(var ch of line){var l=enc.encode(ch).length;if(n+l>73){out.push(cur);cur=" "+ch;n=1+l}else{cur+=ch;n+=l}}
+  out.push(cur);return out.join("\r\n");
+}
+function ymd(d){return d.getFullYear()+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0")}
+function buildIcs(owner,days){
+  var t=today(),stamp=new Date().toISOString().replace(/[-:]/g,"").replace(/\.\d+/,""),n=0,skipped=0,L=[];
+  L.push("BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//So tiet kiem//VI","CALSCALE:GREGORIAN","X-WR-CALNAME:Đáo hạn sổ tiết kiệm");
+  books.filter(function(b){return !b.settled&&(owner==="*"||(b.owner||"Chưa ghi")===owner)}).forEach(function(b){
+    var c=calc(b);
+    if(c.end<t){skipped++;return}
+    var day=ymd(c.end);
+    var title="Đáo hạn sổ "+(b.bank||"tiết kiệm")+(b.owner?" ("+b.owner+")":"")+" "+vnd(b.principal);
+    var desc=["Người gửi: "+(b.owner||"–"),"Ngân hàng: "+(b.bank||"–")+(b.note?" · "+b.note:""),"Ngày gửi: "+dmy(parse(b.start)),
+      "Gốc: "+vnd(b.principal),"Lãi: "+vnd(c.interest),"Gốc + lãi: "+vnd(c.total),"Lãi suất: "+String(b.rate).replace(".",",")+"%/năm · "+b.term+" tháng"].join("\n");
+    L.push("BEGIN:VEVENT","UID:"+b.id+"@sotietkiem","DTSTAMP:"+stamp,"DTSTART:"+day+"T090000","DTEND:"+day+"T093000",
+      "SUMMARY:"+icsEsc(title),"DESCRIPTION:"+icsEsc(desc),
+      "BEGIN:VALARM","ACTION:DISPLAY","DESCRIPTION:"+icsEsc("Sắp đáo hạn: "+title),"TRIGGER:-P"+days+"D","END:VALARM",
+      "BEGIN:VALARM","ACTION:DISPLAY","DESCRIPTION:"+icsEsc("Hôm nay đáo hạn: "+title),"TRIGGER:PT0S","END:VALARM","END:VEVENT");
+    n++;
+  });
+  L.push("END:VCALENDAR");
+  return {text:L.map(icsFold).join("\r\n")+"\r\n",count:n,skipped:skipped};
+}
+async function exportIcs(){
+  var msg=function(m){$("#calmsg").textContent=m};
+  if(dl){msg("Claude không cho lưu file .ics ở bản này. Hãy mở app từ bản trên GitHub (Safari hoặc shortcut màn hình chính) rồi xuất lịch ở đó.");return}
+  var owner=$("#c-owner").value,days=parseInt($("#c-days").value,10)||2;
+  var r=buildIcs(owner,days);
+  if(!r.count){msg("Không có sổ đang gửi nào còn hạn để tạo lịch."+(r.skipped?" ("+r.skipped+" sổ đã quá hạn bị bỏ qua.)":""));return}
+  var slug=owner==="*"?"tat-ca":norm(owner).replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"khac";
+  var name="dao-han-"+slug+".ics";
+  var blob=new Blob([r.text],{type:"text/calendar"});
+  var done="Đã tạo lịch "+r.count+" sổ"+(owner==="*"?"":" của "+owner)+", nhắc trước "+days+" ngày."+(r.skipped?"\nBỏ qua "+r.skipped+" sổ đã quá hạn.":"");
+  try{
+    if(window.File&&navigator.canShare&&navigator.share){
+      var f=new File([blob],name,{type:"text/calendar"});
+      if(navigator.canShare({files:[f]})){await navigator.share({files:[f],title:name});msg(done+"\nTrong bảng chia sẻ, chọn Lịch hoặc Lưu vào Tệp rồi mở file để thêm vào Lịch.");return}
+    }
+    var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();
+    setTimeout(function(){URL.revokeObjectURL(a.href)},10000);
+    msg(done+"\nMở file "+name+" vừa tải để thêm vào Lịch.");
+  }catch(e){msg(e&&e.name==="AbortError"?"Bạn đã hủy.":"Không tạo được file lịch. Mở trang bằng Safari rồi thử lại.")}
+}
+$("#cal").addEventListener("click",exportIcs);
 
 /* ---------- xuất / nhập Excel ---------- */
 var dl=null;
 function ioMsg(m){$("#iomsg").textContent=m}
 async function exportXlsx(){
   if(!window.XLSX){ioMsg("Chưa tải được thư viện Excel. Kiểm tra kết nối rồi tải lại trang.");return}
-  var head=["Ngân hàng","Ghi chú","Số tiền gửi (đ)","Ngày gửi","Kỳ hạn (tháng)","Lãi suất (%/năm)","Trả lãi","Cách tính lãi","Trạng thái","Ngày đáo hạn","Tiền lãi (đ)","Gốc + lãi (đ)"];
+  var head=["Ngân hàng","Người gửi","Ghi chú","Số tiền gửi (đ)","Ngày gửi","Kỳ hạn (tháng)","Lãi suất (%/năm)","Trả lãi","Cách tính lãi","Trạng thái","Ngày đáo hạn","Tiền lãi (đ)","Gốc + lãi (đ)"];
   var rows=books.slice().sort(function(a,b){return calc(a).end-calc(b).end}).map(function(b){
     var c=calc(b);
-    return [b.bank||"",b.note||"",b.principal,dmy(parse(b.start)),b.term,b.rate,PAY[b.payout],METHOD[b.method],b.settled?"Đã tất toán":"Đang gửi",dmy(c.end),c.interest,c.total];
+    return [b.bank||"",b.owner||"",b.note||"",b.principal,dmy(parse(b.start)),b.term,b.rate,PAY[b.payout],METHOD[b.method],b.settled?"Đã tất toán":"Đang gửi",dmy(c.end),c.interest,c.total];
   });
   var ws=XLSX.utils.aoa_to_sheet([head].concat(rows));
-  ws["!cols"]=[18,24,18,13,14,16,13,20,13,14,16,16].map(function(w){return {wch:w}});
+  ws["!cols"]=[18,14,24,18,13,14,16,13,20,13,14,16,16].map(function(w){return {wch:w}});
   var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Sổ tiết kiệm");
   var name="so-tiet-kiem-"+iso(today())+".xlsx";
   try{
@@ -562,25 +640,25 @@ function xRate(v){
 }
 function xTerm(v){var n=typeof v==="number"?Math.round(v):parseInt(String(v).replace(/\D/g,""),10);return isNaN(n)?0:n}
 function importRows(data){
-  var keys={bank:["ngan hang"],note:["ghi chu","ten"],principal:["so tien"],start:["ngay gui"],term:["ky han"],rate:["lai suat"],payout:["tra lai"],method:["cach tinh"],status:["trang thai"]};
+  var keys={bank:["ngan hang"],owner:["nguoi gui","chu so"],note:["ghi chu","ten"],principal:["so tien"],start:["ngay gui"],term:["ky han"],rate:["lai suat"],payout:["tra lai"],method:["cach tinh"],status:["trang thai"]};
   var hi=-1;
   for(var i=0;i<Math.min(data.length,10);i++){var j=data[i].map(norm);if(j.some(function(c){return c.indexOf("so tien")>=0})&&j.some(function(c){return c.indexOf("ngay gui")>=0})){hi=i;break}}
   if(hi<0)return {err:"Không thấy dòng tiêu đề. File cần có cột \"Số tiền gửi\" và \"Ngày gửi\". Hãy dùng file do nút Xuất Excel tạo ra."};
   var heads=data[hi].map(norm),col={};
   Object.keys(keys).forEach(function(k){for(var c=0;c<heads.length;c++){if(keys[k].some(function(w){return heads[c].indexOf(w)>=0})){col[k]=c;break}}});
-  var seen={};books.forEach(function(b){seen[[b.bank,b.principal,b.start,b.term,b.rate].join("|")]=1});
+  var seen={};books.forEach(function(b){seen[[b.bank||"",b.owner||"",b.principal,b.start,b.term,b.rate].join("|")]=1});
   var add=[],dup=0,bad=[];
   for(var r=hi+1;r<data.length;r++){
     var row=data[r];if(!row.some(function(c){return String(c).trim()!==""}))continue;
     var g=function(k){return col[k]==null?"":row[col[k]]};
-    var b={bank:String(g("bank")).trim(),note:String(g("note")).trim(),principal:xAmt(g("principal")),start:xDate(g("start")),term:xTerm(g("term")),rate:xRate(g("rate"))};
+    var b={bank:String(g("bank")).trim(),owner:String(g("owner")).trim(),note:String(g("note")).trim(),principal:xAmt(g("principal")),start:xDate(g("start")),term:xTerm(g("term")),rate:xRate(g("rate"))};
     var why=!b.principal?"thiếu số tiền gửi":!b.start?"ngày gửi không hợp lệ (cần dd/mm/yyyy)":(b.term<1||b.term>600)?"kỳ hạn không hợp lệ":(b.rate===null||b.rate<0||b.rate>100)?"lãi suất không hợp lệ":"";
     if(why){bad.push("Dòng "+(r+1)+": "+why);continue}
     var p=norm(g("payout")),m=norm(g("method")),s=norm(g("status"));
     b.payout=/hang thang|monthly/.test(p)?"monthly":(/dau|start/.test(p)?"start":"end");
     b.method=/thang|month|12/.test(m)?"months":"days";
     b.settled=/tat toan|settled/.test(s);
-    var key=[b.bank,b.principal,b.start,b.term,b.rate].join("|");
+    var key=[b.bank,b.owner,b.principal,b.start,b.term,b.rate].join("|");
     if(seen[key]){dup++;continue}
     seen[key]=1;b.id=newId()+add.length;b.createdAt=Date.now();add.push(b);
   }
@@ -637,5 +715,4 @@ books=loadLocal();render();initSync();
 })();
 </script>
 
-</body>
-</html>
+</body></html>
